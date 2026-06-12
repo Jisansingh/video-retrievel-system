@@ -1,0 +1,139 @@
+"""
+FAISS index loader and similarity search.
+
+Key decisions:
+- Expects an IndexFlatIP index (inner product). Because embeddings are
+  L2-normalized before insertion AND at query time, inner product equals
+  cosine similarity.
+- A companion JSON file (video_metadata.json) maps integer FAISS positions
+  to video filenames. This is a simple list where index N corresponds to
+  the N-th row in the FAISS index.
+- The index and metadata are loaded once at startup and held in memory.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+from dataclasses import dataclass
+
+import faiss
+import numpy as np
+
+from ml_pipeline.search_index import search_videos as ml_search_videos
+
+
+@dataclass(frozen=True)
+class SearchResult:
+    video_filename: str
+    score: float
+
+
+# Paths relative to the project root's data/embeddings directory.
+DEFAULT_INDEX_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "ml_pipeline", "data", "indexes")
+)
+DEFAULT_INDEX_PATH = os.path.join(DEFAULT_INDEX_DIR, "video_index.faiss")
+DEFAULT_METADATA_PATH = os.path.join(DEFAULT_INDEX_DIR, "video_metadata.json")
+
+_index: faiss.Index | None = None
+_metadata: list[str] | None = None
+
+
+def init_index(
+    index_path: str | None = None,
+    metadata_path: str | None = None,
+) -> None:
+    """Load the FAISS index and video metadata into memory.
+
+    Called from the FastAPI startup event. Idempotent.
+
+    Args:
+        index_path: Path to the .faiss binary index file.
+        metadata_path: Path to video_metadata.json (a JSON list of filenames).
+    """
+    global _index, _metadata
+
+    ipath = index_path or DEFAULT_INDEX_PATH
+    mpath = metadata_path or DEFAULT_METADATA_PATH
+
+    if not os.path.exists(ipath):
+        raise FileNotFoundError(
+            f"FAISS index not found at {ipath}. "
+            "Run the Colab pipeline first and copy video_index.faiss into data/embeddings/."
+        )
+    if not os.path.exists(mpath):
+        raise FileNotFoundError(
+            f"Metadata file not found at {mpath}. "
+            "Run the Colab pipeline first and copy video_metadata.json into data/embeddings/."
+        )
+
+    _index = faiss.read_index(ipath)
+    with open(mpath, "r") as f:
+        _metadata = json.load(f)
+
+    if not isinstance(_metadata, list):
+        raise ValueError("video_metadata.json must be a JSON list of video filenames.")
+
+    if _index.ntotal != len(_metadata):
+        raise ValueError(
+            f"FAISS index has {_index.ntotal} vectors but metadata has "
+            f"{len(_metadata)} entries. They must match."
+        )
+
+    print(f"[search] FAISS index loaded: {_index.ntotal} vectors, dim={_index.d}")
+
+
+def get_index() -> faiss.Index:
+    """Return the loaded FAISS index."""
+    global _index
+    if _index is None:
+        raise RuntimeError("FAISS index not initialized. Call init_index() first.")
+    return _index
+
+
+def get_metadata() -> list[str]:
+    """Return the video metadata list."""
+    global _metadata
+    if _metadata is None:
+        raise RuntimeError("Metadata not initialized. Call init_index() first.")
+    return _metadata
+
+
+def search_similar(
+    query_embedding: np.ndarray,
+    top_k: int = 5,
+) -> list[SearchResult]:
+    """Search the FAISS index for the top-k most similar videos.
+
+    Args:
+        query_embedding: A 1D numpy float32 array (already L2-normalized).
+        top_k: Number of results to return. Clamped to the index size.
+
+    Returns:
+        A list of SearchResult objects sorted by descending similarity score.
+    """
+    index = get_index()
+    metadata = get_metadata()
+
+    top_k = min(top_k, index.ntotal)
+
+    # FAISS expects shape (1, dim) for a single query
+    query = np.expand_dims(query_embedding, axis=0).astype(np.float32)
+    distances, indices = index.search(query, top_k)
+
+    results: list[SearchResult] = []
+    for dist, idx in zip(distances[0], indices[0]):
+        if idx == -1:
+            continue  # FAISS returns -1 when there are fewer results than top_k
+        results.append(SearchResult(video_filename=metadata[idx], score=float(dist)))
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Text search wrapper — delegates to the ML pipeline.
+# ---------------------------------------------------------------------------
+def text_search(query: str, top_k: int = 5) -> list[dict]:
+    """Search for videos by natural-language query. Raises ValueError on empty input."""
+    return ml_search_videos(query, top_k=top_k)
