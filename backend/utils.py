@@ -21,6 +21,11 @@ ALLOWED_CONTENT_TYPES: frozenset[str] = frozenset(
 )
 MAX_FILE_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 
+ALLOWED_VIDEO_CONTENT_TYPES: frozenset[str] = frozenset(
+    {"video/mp4", "video/x-msvideo", "video/quicktime", "video/x-matroska", "video/webm"}
+)
+MAX_VIDEO_FILE_SIZE_BYTES: int = 200 * 1024 * 1024  # 200 MB
+
 
 def validate_image(upload: UploadFile) -> None:
     """Check that the uploaded file is a supported image format and not too large.
@@ -53,21 +58,44 @@ def validate_image(upload: UploadFile) -> None:
         )
 
 
-def save_temp_image(upload: UploadFile) -> str:
-    """Save an uploaded image to a temporary file and return the path.
+def validate_video(upload: UploadFile) -> None:
+    """Check that the uploaded file is a supported video format and not too large."""
+    if upload.content_type is None:
+        raise HTTPException(status_code=400, detail="Content-Type header is required.")
+    if upload.content_type not in ALLOWED_VIDEO_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{upload.content_type}'. "
+                   f"Allowed: {', '.join(sorted(ALLOWED_VIDEO_CONTENT_TYPES))}",
+        )
+    upload.file.seek(0, os.SEEK_END)
+    size = upload.file.tell()
+    upload.file.seek(0)
+    if size == 0:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+    if size > MAX_VIDEO_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large ({size} bytes). Maximum is {MAX_VIDEO_FILE_SIZE_BYTES} bytes.",
+        )
 
-    The file is saved with the original extension so Pillow can auto-detect
-    the format correctly. The caller is responsible for deleting the file
-    after use (see ``cleanup_temp_file``).
+
+def save_temp_image(upload: UploadFile, prefix: str = "search_img_") -> str:
+    """Save an uploaded file to a temporary location and return the path.
+
+    The file is saved with the original extension so consumer libraries can
+    auto-detect the format correctly. The caller is responsible for deleting
+    the file after use (see ``cleanup_temp_file``).
 
     Args:
         upload: A validated FastAPI UploadFile.
+        prefix: Prefix for the temporary file name.
 
     Returns:
         Absolute path to the temporary file.
     """
     suffix = _extension_from_content_type(upload.content_type)
-    fd, path = tempfile.mkstemp(suffix=suffix, prefix="search_img_")
+    fd, path = tempfile.mkstemp(suffix=suffix, prefix=prefix)
     os.close(fd)  # We don't need the file descriptor; just want a unique path.
 
     with open(path, "wb") as dst:
@@ -88,12 +116,17 @@ def cleanup_temp_file(path: str) -> None:
 
 
 def _extension_from_content_type(content_type: str | None) -> str:
-    """Map a MIME type to a file extension. Falls back to .jpg."""
+    """Map a MIME type to a file extension. Falls back to .jpg for unknown types."""
     mapping = {
         "image/jpeg": ".jpg",
         "image/png": ".png",
         "image/webp": ".webp",
         "image/bmp": ".bmp",
         "image/tiff": ".tiff",
+        "video/mp4": ".mp4",
+        "video/x-msvideo": ".avi",
+        "video/quicktime": ".mov",
+        "video/x-matroska": ".mkv",
+        "video/webm": ".webm",
     }
     return mapping.get(content_type or "", ".jpg")

@@ -5,20 +5,25 @@ Start with:
     uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 
 Endpoints:
-    POST /search  —  upload an image, get top-k similar videos.
-    GET  /health  —  quick liveness check.
+    POST /search       —  upload an image, get top-k similar videos.
+    POST /search/video —  upload a video, get top-k similar videos.
+    GET  /search       —  natural-language text search.
+    GET  /health       —  quick liveness check.
+    GET  /             —  root.
 """
 
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, File, UploadFile, Query
+import cv2
+import numpy as np
+from fastapi import FastAPI, File, UploadFile, Query, HTTPException
 from PIL import Image
 
 from backend.model import init_model, generate_embedding
 from backend.search import init_index, search_similar, text_search
-from backend.utils import validate_image, save_temp_image, cleanup_temp_file
+from backend.utils import validate_image, validate_video, save_temp_image, cleanup_temp_file
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +44,54 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+FRAME_INTERVAL: int = 30  # Must match ml_pipeline/config.py
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+def generate_video_embedding(video_path: str) -> np.ndarray:
+    """Open a video, sample frames, encode each with CLIP, return a single
+    mean-pooled L2-normalized embedding vector.
+
+    Mirrors the ML pipeline logic (extract_frames + generate_embeddings) but
+    processes frames in-memory without writing intermediate files.
+    """
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise ValueError("Could not open video file")
+
+    frame_embeddings: list[np.ndarray] = []
+    frame_idx = 0
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if frame_idx % FRAME_INTERVAL == 0:
+            # OpenCV uses BGR; CLIP expects RGB
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            pil_image = Image.fromarray(rgb)
+            emb = generate_embedding(pil_image)
+            frame_embeddings.append(emb)
+        frame_idx += 1
+
+    cap.release()
+
+    if not frame_embeddings:
+        raise ValueError("No frames could be extracted from the video")
+
+    # Mean-pool then re-normalize (same strategy as the ML pipeline)
+    video_embedding = np.mean(frame_embeddings, axis=0)
+    norm = np.linalg.norm(video_embedding)
+    if norm > 0:
+        video_embedding = video_embedding / norm
+    return video_embedding.astype(np.float32)
 
 
 # ---------------------------------------------------------------------------
@@ -106,6 +159,35 @@ async def search(
     # 6. Build response
     return {
         "query": image.filename or "uploaded_image",
+        "results": [
+            {"video": r.video_filename, "score": round(r.score, 4)} for r in results
+        ],
+    }
+
+
+@app.post("/search/video")
+async def search_video(
+    video: UploadFile = File(...),
+    top_k: int = Query(default=5, ge=1, le=50, description="Number of results to return"),
+):
+    """Search for videos similar to an uploaded video.
+
+    The uploaded video is sampled (every 30th frame), each sampled frame is
+    encoded with CLIP, and the frame embeddings are mean-pooled into a single
+    query vector before searching the FAISS index.
+    """
+    validate_video(video)
+
+    temp_path = save_temp_image(video, prefix="search_vid_")
+
+    try:
+        embedding = generate_video_embedding(temp_path)
+        results = search_similar(embedding, top_k=top_k)
+    finally:
+        cleanup_temp_file(temp_path)
+
+    return {
+        "query": video.filename or "uploaded_video",
         "results": [
             {"video": r.video_filename, "score": round(r.score, 4)} for r in results
         ],
