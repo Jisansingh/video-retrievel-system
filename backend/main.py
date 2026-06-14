@@ -5,25 +5,31 @@ Start with:
     uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 
 Endpoints:
+    GET  /             —  root.
+    GET  /health       —  quick liveness check.
+    GET  /search       —  natural-language text search.
     POST /search       —  upload an image, get top-k similar videos.
     POST /search/video —  upload a video, get top-k similar videos.
-    GET  /search       —  natural-language text search.
-    GET  /health       —  quick liveness check.
-    GET  /             —  root.
+    GET  /library      —  list all videos grouped by category.
+    /videos/*          —  static video file serving.
+    /frames/*          —  static thumbnail (frame) serving.
 """
 
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 
 import cv2
 import numpy as np
 from fastapi import FastAPI, File, UploadFile, Query, HTTPException
+from fastapi.staticfiles import StaticFiles
 from PIL import Image
 
 from backend.model import init_model, generate_embedding
 from backend.search import init_index, search_similar, text_search
 from backend.utils import validate_image, validate_video, save_temp_image, cleanup_temp_file
+from ml_pipeline.config import VIDEOS_DIR, FRAMES_DIR
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +56,7 @@ app = FastAPI(
 # Constants
 # ---------------------------------------------------------------------------
 FRAME_INTERVAL: int = 30  # Must match ml_pipeline/config.py
+_VIDEO_EXTS: tuple[str, ...] = (".mp4", ".avi", ".mov", ".mkv", ".webm")
 
 
 # ---------------------------------------------------------------------------
@@ -74,7 +81,6 @@ def generate_video_embedding(video_path: str) -> np.ndarray:
         if not ret:
             break
         if frame_idx % FRAME_INTERVAL == 0:
-            # OpenCV uses BGR; CLIP expects RGB
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             pil_image = Image.fromarray(rgb)
             emb = generate_embedding(pil_image)
@@ -86,12 +92,38 @@ def generate_video_embedding(video_path: str) -> np.ndarray:
     if not frame_embeddings:
         raise ValueError("No frames could be extracted from the video")
 
-    # Mean-pool then re-normalize (same strategy as the ML pipeline)
     video_embedding = np.mean(frame_embeddings, axis=0)
     norm = np.linalg.norm(video_embedding)
     if norm > 0:
         video_embedding = video_embedding / norm
     return video_embedding.astype(np.float32)
+
+
+def _video_ext(category: str, stem: str) -> str:
+    """Return the actual file extension for a video by checking the filesystem."""
+    for ext in _VIDEO_EXTS:
+        if os.path.isfile(os.path.join(VIDEOS_DIR, category, stem + ext)):
+            return ext
+    return ".mp4"
+
+
+def _enrich_video(video_path: str) -> dict:
+    """Build frontend-facing fields from a metadata video path (e.g. 'animals/animals_0')."""
+    category, stem = video_path.split("/", 1)
+    ext = _video_ext(category, stem)
+    return {
+        "title": f"{stem}{ext}",
+        "category": category,
+        "video_url": f"/videos/{category}/{stem}{ext}",
+        "thumbnail_url": f"/frames/{video_path}/frame_00000.jpg",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Static file mounts — serve videos and thumbnails directly from disk.
+# ---------------------------------------------------------------------------
+app.mount("/videos", StaticFiles(directory=VIDEOS_DIR), name="videos")
+app.mount("/frames", StaticFiles(directory=FRAMES_DIR), name="frames")
 
 
 # ---------------------------------------------------------------------------
@@ -122,6 +154,9 @@ async def text_search_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search failed: {e}")
 
+    for r in results:
+        r.update(_enrich_video(r["video"]))
+
     return {"query": query.strip(), "results": results}
 
 
@@ -136,31 +171,22 @@ async def search(
         image: An image file (JPEG, PNG, WebP, BMP, or TIFF, max 10 MB).
         top_k: How many similar videos to return (1–50).
     """
-    # 1. Validate the uploaded file
     validate_image(image)
 
-    # 2. Save to a temp file so Pillow can open it reliably
     temp_path = save_temp_image(image)
 
     try:
-        # 3. Open with Pillow and convert to RGB (CLIP requires 3-channel)
         pil_image = Image.open(temp_path).convert("RGB")
-
-        # 4. Generate normalized CLIP embedding
         embedding = generate_embedding(pil_image)
-
-        # 5. Search FAISS index
         results = search_similar(embedding, top_k=top_k)
-
     finally:
-        # Always clean up the temp file, even if inference fails
         cleanup_temp_file(temp_path)
 
-    # 6. Build response
     return {
         "query": image.filename or "uploaded_image",
         "results": [
-            {"video": r.video_filename, "score": round(r.score, 4)} for r in results
+            {"video": r.video_filename, "score": round(r.score, 4), **_enrich_video(r.video_filename)}
+            for r in results
         ],
     }
 
@@ -189,6 +215,38 @@ async def search_video(
     return {
         "query": video.filename or "uploaded_video",
         "results": [
-            {"video": r.video_filename, "score": round(r.score, 4)} for r in results
+            {"video": r.video_filename, "score": round(r.score, 4), **_enrich_video(r.video_filename)}
+            for r in results
         ],
     }
+
+
+@app.get("/library")
+async def library():
+    """List all videos grouped by category with title, video_url, and thumbnail_url.
+
+    Built dynamically from the filesystem — no database, no hardcoded values.
+    """
+    categories: dict[str, list[dict]] = {}
+
+    for cat_name in sorted(os.listdir(VIDEOS_DIR)):
+        cat_path = os.path.join(VIDEOS_DIR, cat_name)
+        if not os.path.isdir(cat_path):
+            continue
+
+        entries: list[dict] = []
+        for fname in sorted(os.listdir(cat_path)):
+            if fname.startswith("."):
+                continue
+            stem, ext = os.path.splitext(fname)
+            if ext.lower() not in _VIDEO_EXTS:
+                continue
+            video_path = f"{cat_name}/{stem}"
+            entry = {"title": fname, "category": cat_name}
+            entry.update(_enrich_video(video_path))
+            entries.append(entry)
+
+        if entries:
+            categories[cat_name] = entries
+
+    return categories
