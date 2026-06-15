@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@theme {
+  --color-on-tertiary: #ffffff;
+  --color-on-surface-variant: #3d4947;
+  --color-error-container: #ffdad6;
+  --color-on-secondary: #ffffff;
+  --color-surface: #f5faf8;
+  --color-on-surface: #171d1c;
+  --color-surface-container-highest: #dee4e1;
+  --color-surface-container-high: #e4e9e7;
+  --color-tertiary-fixed: #ffdbce;
+  --color-surface-tint: #006a61;
+  --color-outline-variant: #bcc9c6;
+  --color-on-secondary-fixed-variant: #38485d;
+  --color-primary-container: #008378;
+  --color-inverse-primary: #6bd8cb;
+  --color-secondary-fixed: #d3e4fe;
+  --color-on-error-container: #93000a;
+  --color-on-secondary-container: #54647a;
+  --color-on-tertiary-fixed: #370e00;
+  --color-tertiary: #924628;
+  --color-on-tertiary-fixed-variant: #773215;
+  --color-background: #f5faf8;
+  --color-secondary-fixed-dim: #b7c8e1;
+  --color-primary-fixed-dim: #6bd8cb;
+  --color-surface-container-lowest: #ffffff;
+  --color-primary: #00685f;
+  --color-inverse-surface: #2c3130;
+  --color-inverse-on-surface: #edf2f0;
+  --color-outline: #6d7a77;
+  --color-error: #ba1a1a;
+  --color-surface-container-low: #f0f5f2;
+  --color-on-primary-container: #f4fffc;
+  --color-surface-variant: #dee4e1;
+  --color-secondary-container: #d0e1fb;
+  --color-tertiary-fixed-dim: #ffb59a;
+  --color-surface-bright: #f5faf8;
+  --color-on-primary-fixed: #00201d;
+  --color-on-primary-fixed-variant: #005049;
+  --color-surface-container: #eaefed;
+  --color-on-background: #171d1c;
+  --color-secondary: #505f76;
+  --color-tertiary-container: #b05e3d;
+  --color-on-secondary-fixed: #0b1c30;
+  --color-on-tertiary-container: #fffbff;
+  --color-on-primary: #ffffff;
+  --color-surface-dim: #d6dbd9;
+  --color-on-error: #ffffff;
+  --color-primary-fixed: #89f5e7;
+
+  --font-headline-lg-mobile: Outfit, sans-serif;
+  --font-body-lg: Inter, sans-serif;
+  --font-headline-lg: Outfit, sans-serif;
+  --font-headline-md: Outfit, sans-serif;
+  --font-label-sm: Inter, sans-serif;
+  --font-label-md: Inter, sans-serif;
+  --font-body-sm: Inter, sans-serif;
+  --font-headline-sm: Outfit, sans-serif;
+  --font-display-lg: Outfit, sans-serif;
+  --font-body-md: Inter, sans-serif;
+
+  --text-headline-lg-mobile: 24px;
+  --text-headline-lg-mobile--line-height: 1.3;
+  --text-headline-lg-mobile--font-weight: 600;
+
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.6;
+  --text-body-lg--font-weight: 400;
+
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 1.3;
+  --text-headline-lg--letter-spacing: -0.01em;
+  --text-headline-lg--font-weight: 600;
+
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 1.4;
+  --text-headline-md--font-weight: 500;
+
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 1;
+  --text-label-sm--letter-spacing: 0.03em;
+  --text-label-sm--font-weight: 600;
+
+  --text-label-md: 14px;
+  --text-label-md--line-height: 1;
+  --text-label-md--letter-spacing: 0.01em;
+  --text-label-md--font-weight: 500;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.5;
+  --text-body-sm--font-weight: 400;
+
+  --text-headline-sm: 20px;
+  --text-headline-sm--line-height: 1.4;
+  --text-headline-sm--font-weight: 500;
+
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 1.2;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 600;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 1.6;
+  --text-body-md--font-weight: 400;
+
+  --spacing-sm: 8px;
+  --spacing-lg: 24px;
+  --spacing-xs: 4px;
+  --spacing-md: 16px;
+  --spacing-xl: 40px;
+  --spacing-gutter: 24px;
+  --spacing-container-max: 1440px;
+  --spacing-base: 4px;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  vertical-align: middle;
+}
+.soft-shadow {
+  box-shadow: 0px 4px 12px rgba(30, 41, 59, 0.05);
+}
+.backdrop-blur-nav {
+  backdrop-filter: blur(8px);
+  background-color: rgba(245, 250, 248, 0.8);
+}
