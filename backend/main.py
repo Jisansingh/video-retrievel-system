@@ -23,6 +23,7 @@ from contextlib import asynccontextmanager
 import cv2
 import numpy as np
 from fastapi import FastAPI, File, UploadFile, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
 
@@ -49,6 +50,14 @@ app = FastAPI(
     description="Search for visually similar videos using CLIP + FAISS.",
     version="1.0.0",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex="https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

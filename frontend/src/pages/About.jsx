@@ -11,21 +11,14 @@ export default function About() {
         
         {/* Hero Section */}
         <section className="text-center max-w-5xl mx-auto w-full">
-          <h1 className="font-display-lg text-display-lg text-on-surface mb-6 font-bold">Video Retrieval System</h1>
+          <h1 className="font-display-lg text-display-lg text-on-surface mb-6 font-bold">Multimodal Video Retrieval System</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-            A professional multimodal video retrieval platform leveraging state-of-the-art CLIP vision-language models and FAISS vector similarity search for surgical precision across massive video archives.
+            A professional multimodal video retrieval platform leveraging CLIP vision-language models and FAISS vector similarity search for surgical precision across massive video archives.
           </p>
         </section>
 
         {/* Project Overview */}
         <section className="grid md:grid-cols-2 gap-12 items-center bg-surface-container-low p-8 md:p-12 rounded-3xl border border-outline-variant w-full">
-          <div className="rounded-2xl overflow-hidden shadow-md bg-white border border-outline-variant/50 w-full h-full min-h-[300px]">
-            <img 
-              className="w-full h-full object-cover" 
-              alt="Data Center Server Racks" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuArbPPpW-oumb2sslikOKrSTDbc_IfrjjoEejNBi8nH3f5sdlpfr9h9yzXOiJrLmgHShoGYbrjPaPHK54bonris9-qQp2Jrd_bgvlD4Ws92t1zj9mdS6l10p965Spf1ZhqrE1lZRISd7kqNEAAnihhJge2iw021KHCDJ4cRvUfHjDmkCfVx7v6G6EHct9Sy2rnUDOwBMM-UCMoEiwZECpkBOa1jdDpXMNUXfmZbIV4Hc4StM0RpMdHX6_SKyhCvQwzwwxtYcUUqyKw"
-            />
-          </div>
           <div className="flex flex-col gap-6">
             <span className="text-primary font-label-sm uppercase tracking-widest font-bold">Platform Core</span>
             <h2 className="font-headline-lg text-headline-lg font-bold">Semantic Discovery Reimagined</h2>
@@ -35,17 +28,28 @@ export default function About() {
             <ul className="flex flex-col gap-4 mt-2">
               <li className="flex items-start gap-4">
                 <CheckCircle className="text-primary w-6 h-6 shrink-0" />
-                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Natural language understanding for complex descriptive queries.</span>
+                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Text-to-Video Search — natural language understanding for complex descriptive queries.</span>
               </li>
               <li className="flex items-start gap-4">
                 <CheckCircle className="text-primary w-6 h-6 shrink-0" />
-                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Zero-shot generalization across diverse visual domains.</span>
+                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Image-to-Video Search — find visually similar content using a reference image.</span>
               </li>
               <li className="flex items-start gap-4">
                 <CheckCircle className="text-primary w-6 h-6 shrink-0" />
-                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Sub-millisecond retrieval speeds on massive vector indices.</span>
+                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Video-to-Video Search — identify related sequences by providing a video clip.</span>
               </li>
             </ul>
+          </div>
+          <div className="flex flex-col gap-4 p-8 bg-surface-container-lowest rounded-2xl border border-outline-variant">
+            <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">Technology Stack</h3>
+            <div className="flex flex-wrap gap-3">
+              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">CLIP ViT-B/32</span>
+              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">FAISS</span>
+              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">FastAPI</span>
+              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">React</span>
+              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">Python</span>
+              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">Tailwind CSS</span>
+            </div>
           </div>
         </section>
 
@@ -61,42 +65,42 @@ export default function About() {
                 <Languages className="text-on-primary-container w-8 h-8" />
               </div>
               <h3 className="font-headline-sm text-headline-sm font-bold mb-4">Text-to-Video Search</h3>
-              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Perform semantic searches using natural language descriptions like "A dog running on a beach at sunset."</p>
+              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Perform semantic searches using natural language descriptions. The CLIP model encodes text queries into the same latent space as video frames for accurate retrieval.</p>
             </div>
             <div className="bg-surface-container-lowest p-10 rounded-2xl border border-outline-variant hover:shadow-lg transition-shadow h-full min-h-[280px] flex flex-col">
               <div className="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center mb-8 shrink-0">
                 <ImageIcon className="text-on-primary-container w-8 h-8" />
               </div>
               <h3 className="font-headline-sm text-headline-sm font-bold mb-4">Image-to-Video Search</h3>
-              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Find videos containing visually similar content by uploading a reference image or frame.</p>
+              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Upload a reference image to find videos with visually similar content. CLIP generates embeddings for comparison against the FAISS index.</p>
             </div>
             <div className="bg-surface-container-lowest p-10 rounded-2xl border border-outline-variant hover:shadow-lg transition-shadow h-full min-h-[280px] flex flex-col">
               <div className="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center mb-8 shrink-0">
                 <Film className="text-on-primary-container w-8 h-8" />
               </div>
               <h3 className="font-headline-sm text-headline-sm font-bold mb-4">Video-to-Video Search</h3>
-              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Identify related sequences or similar artistic styles by providing a video clip as the input query.</p>
+              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Upload a video clip as a query. Frames are sampled every 30th interval, mean-pooled into a single embedding, and matched against the index.</p>
             </div>
             <div className="bg-surface-container-lowest p-10 rounded-2xl border border-outline-variant hover:shadow-lg transition-shadow h-full min-h-[280px] flex flex-col">
               <div className="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center mb-8 shrink-0">
                 <Grid3X3 className="text-on-primary-container w-8 h-8" />
               </div>
               <h3 className="font-headline-sm text-headline-sm font-bold mb-4">Categorized Browsing</h3>
-              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Systematic organization of video assets into hierarchical taxonomies for efficient human-in-the-loop review.</p>
+              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Browse 500 indexed videos organized across 5 categories: Animals, Nature, Humans, Vehicles, and Indoors.</p>
             </div>
             <div className="bg-surface-container-lowest p-10 rounded-2xl border border-outline-variant hover:shadow-lg transition-shadow h-full min-h-[280px] flex flex-col">
               <div className="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center mb-8 shrink-0">
                 <Eye className="text-on-primary-container w-8 h-8" />
               </div>
               <h3 className="font-headline-sm text-headline-sm font-bold mb-4">Thumbnail Preview</h3>
-              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Instant, high-fidelity frame previews allow for rapid assessment of retrieval relevance without full playback.</p>
+              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Instant frame previews from the first frame of each video allow rapid assessment of retrieval relevance without full playback.</p>
             </div>
             <div className="bg-surface-container-lowest p-10 rounded-2xl border border-outline-variant hover:shadow-lg transition-shadow h-full min-h-[280px] flex flex-col">
               <div className="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center mb-8 shrink-0">
                 <PlayCircle className="text-on-primary-container w-8 h-8" />
               </div>
               <h3 className="font-headline-sm text-headline-sm font-bold mb-4">Video Playback</h3>
-              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Integrated low-latency media engine for seamless verification of results within the retrieval interface.</p>
+              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Integrated HTML5 video player for seamless verification of results directly within the retrieval interface.</p>
             </div>
           </div>
         </section>
@@ -108,7 +112,6 @@ export default function About() {
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative max-w-7xl mx-auto z-0">
             
-            {/* The horizontal connecting line for desktop */}
             <div className="hidden md:block absolute top-12 left-[12%] right-[12%] h-1 bg-outline-variant/50 rounded-full -z-10"></div>
             
             <div className="flex flex-col items-center flex-1 text-center w-full z-10 bg-surface-container md:bg-transparent">
@@ -176,16 +179,16 @@ export default function About() {
             <h3 className="font-headline-sm text-headline-sm font-bold mb-10">Dataset Composition</h3>
             <div className="flex flex-col gap-8 flex-grow justify-center">
               {[
-                { name: 'Animals', val: '100 / 20%' },
-                { name: 'Nature', val: '100 / 20%' },
-                { name: 'Humans', val: '100 / 20%' },
-                { name: 'Vehicles', val: '100 / 20%' },
-                { name: 'Indoors', val: '100 / 20%' }
+                { name: 'Animals' },
+                { name: 'Nature' },
+                { name: 'Humans' },
+                { name: 'Vehicles' },
+                { name: 'Indoors' }
               ].map((cat) => (
                 <div key={cat.name}>
                   <div className="flex justify-between mb-3">
                     <span className="font-label-md font-semibold text-lg">{cat.name}</span>
-                    <span className="font-label-md text-primary font-bold text-lg">{cat.val}</span>
+                    <span className="font-label-md text-primary font-bold text-lg">100 / 20%</span>
                   </div>
                   <div className="w-full bg-surface-container rounded-full h-3 shadow-inner">
                     <div className="bg-primary h-3 rounded-full" style={{ width: '20%' }}></div>

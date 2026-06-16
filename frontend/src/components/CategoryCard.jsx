@@ -1,3 +1,5 @@
+import { ArrowRight } from 'lucide-react';
+
 export default function CategoryCard({ title, count, imageSrc, isActive, onClick }) {
   return (
     <button 
@@ -15,7 +17,7 @@ export default function CategoryCard({ title, count, imageSrc, isActive, onClick
       <span className="font-label-sm text-label-sm text-on-surface-variant">{count} Videos</span>
       
       <div className={`absolute top-6 right-6 bg-primary/10 text-primary p-1.5 rounded-full transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+        <ArrowRight className="w-4 h-4" />
       </div>
     </button>
   );
