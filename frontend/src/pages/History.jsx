@@ -37,7 +37,7 @@ export default function History() {
   };
 
   return (
-    <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col w-full overflow-x-hidden">
+    <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col w-full">
       <Navbar />
       
       <main className="pt-28 pb-12 flex-grow w-full flex flex-col max-w-screen-2xl mx-auto px-6">

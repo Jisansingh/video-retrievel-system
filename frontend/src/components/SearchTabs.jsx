@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Image as ImageIcon, Film, Zap } from 'lucide-react';
 import SearchBar from './SearchBar';
 
-export default function SearchTabs({ onTextSearch, onImageSearch, onVideoSearch }) {
+export default function SearchTabs({ onTextSearch, onImageSearch, onVideoSearch, topK, onTopKChange }) {
   const [activeTab, setActiveTab] = useState('text');
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
@@ -63,7 +63,7 @@ export default function SearchTabs({ onTextSearch, onImageSearch, onVideoSearch 
       <div className="p-6 sm:p-10">
         {/* Text Search Panel */}
         {activeTab === 'text' && (
-          <SearchBar onSearch={onTextSearch} />
+          <SearchBar onSearch={onTextSearch} topK={topK} onTopKChange={onTopKChange} />
         )}
         
         {/* Image Search Panel */}

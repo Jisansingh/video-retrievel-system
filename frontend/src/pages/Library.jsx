@@ -7,11 +7,14 @@ import VideoModal from '../components/VideoModal';
 import { Link } from 'react-router-dom';
 import { getLibrary, assetUrl } from '../lib/api';
 
+const PAGE_SIZE = 12;
+
 export default function Library() {
   const [activeCategory, setActiveCategory] = useState('animals');
   const [libraryData, setLibraryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     console.log('[Library] fetching /library...');
@@ -29,6 +32,10 @@ export default function Library() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeCategory]);
+
   const categories = libraryData
     ? Object.entries(libraryData).map(([key, videos]) => ({
         id: key,
@@ -38,10 +45,16 @@ export default function Library() {
       }))
     : [];
 
-  const libraryVideos = libraryData?.[activeCategory] || [];
+  const allVideos = libraryData?.[activeCategory] || [];
+  const visibleVideos = allVideos.slice(0, visibleCount);
+  const hasMore = visibleCount < allVideos.length;
+
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + PAGE_SIZE);
+  };
 
   return (
-    <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col w-full overflow-x-hidden">
+    <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col w-full">
       <Navbar />
       
       <main className="pt-28 pb-12 flex-grow w-full flex flex-col max-w-screen-2xl mx-auto px-6">
@@ -85,7 +98,7 @@ export default function Library() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {libraryVideos.map((video, idx) => (
+              {visibleVideos.map((video, idx) => (
                 <LibraryVideoCard 
                   key={video.title + idx}
                   title={video.title}
@@ -94,6 +107,17 @@ export default function Library() {
                 />
               ))}
             </div>
+
+            {hasMore && (
+              <div className="mt-12 flex items-center justify-center">
+                <button
+                  className="bg-surface-container-low border border-outline-variant text-primary font-label-md text-base px-8 py-3 rounded-lg hover:bg-surface-variant transition-all font-semibold shadow-sm hover:shadow active:scale-95 cursor-pointer"
+                  onClick={handleLoadMore}
+                >
+                  Load More
+                </button>
+              </div>
+            )}
           </section>
         )}
       </main>

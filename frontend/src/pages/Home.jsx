@@ -24,14 +24,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [searchParams] = useSearchParams();
+  const [topK, setTopK] = useState(5);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const handleTextSearch = async (q) => {
     setLoading(true);
     setSearchType('text');
     setQuery(q);
+    setHasSearched(true);
     try {
-      console.log('[Search] text search query:', q);
-      const data = await textSearch(q, 5);
+      console.log('[Search] text search query:', q, 'top_k:', topK);
+      const data = await textSearch(q, topK);
       console.log('[Search] response', data);
       setResults(data.results || []);
       saveToHistory({ type: 'text', query: q });
@@ -47,9 +50,10 @@ export default function Home() {
     setLoading(true);
     setSearchType('image');
     setQuery(file.name);
+    setHasSearched(true);
     try {
-      console.log('[Search] image search file:', file.name);
-      const data = await imageSearch(file, 5);
+      console.log('[Search] image search file:', file.name, 'top_k:', topK);
+      const data = await imageSearch(file, topK);
       console.log('[Search] response', data);
       setResults(data.results || []);
       saveToHistory({ type: 'image', fileName: file.name });
@@ -65,9 +69,10 @@ export default function Home() {
     setLoading(true);
     setSearchType('video');
     setQuery(file.name);
+    setHasSearched(true);
     try {
-      console.log('[Search] video search file:', file.name);
-      const data = await videoSearch(file, 5);
+      console.log('[Search] video search file:', file.name, 'top_k:', topK);
+      const data = await videoSearch(file, topK);
       console.log('[Search] response', data);
       setResults(data.results || []);
       saveToHistory({ type: 'video', fileName: file.name });
@@ -84,8 +89,10 @@ export default function Home() {
     if (q) handleTextSearch(q);
   }, []);
 
+  const showResults = hasSearched || loading || results.length > 0;
+
   return (
-    <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col w-full overflow-x-hidden">
+    <div className="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col w-full">
       <Navbar />
       
       <main className="pt-24 pb-12 flex-grow w-full flex flex-col">
@@ -109,47 +116,67 @@ export default function Home() {
             onTextSearch={handleTextSearch}
             onImageSearch={handleImageSearch}
             onVideoSearch={handleVideoSearch}
+            topK={topK}
+            onTopKChange={setTopK}
           />
         </section>
 
         {/* Results Section */}
-        {(results.length > 0 || loading) && (
+        {showResults && (
           <section className="w-full max-w-screen-2xl mx-auto px-6 mb-12">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-              <h2 className="font-headline-md text-headline-md font-bold">Retrieval Results</h2>
-              <div className="flex flex-wrap gap-4 bg-surface-container-low p-3 rounded-lg border border-outline-variant">
-                <div className="px-4 border-r border-outline-variant">
-                  <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Search Type</p>
-                  <p className="text-label-md text-on-surface font-semibold capitalize">{searchType}</p>
-                </div>
-                <div className="px-4 border-r border-outline-variant">
-                  <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Query</p>
-                  <p className="text-label-md text-on-surface font-semibold max-w-[200px] truncate">{query}</p>
-                </div>
-                <div className="px-4">
-                  <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Results</p>
-                  <p className="text-label-md text-on-surface font-semibold">{results.length}</p>
-                </div>
-              </div>
-            </div>
-
-            {loading ? (
+            {loading && (
               <div className="flex items-center justify-center py-16">
-                <p className="text-on-surface-variant font-body-md">Searching...</p>
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-on-surface-variant font-body-md">Searching...</p>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full">
-                {results.map((video, idx) => (
-                  <VideoCard
-                    key={idx}
-                    title={video.title}
-                    imageSrc={assetUrl(video.thumbnail_url)}
-                    score={video.score}
-                    category={video.category}
-                    onClick={() => setSelectedVideo(video)}
-                  />
-                ))}
+            )}
+
+            {!loading && hasSearched && results.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="font-body-lg text-body-lg text-on-surface-variant">No results found</p>
+                <p className="font-body-sm text-body-sm text-outline mt-2">Try a different query or adjust the top-k value.</p>
               </div>
+            )}
+
+            {!loading && results.length > 0 && (
+              <>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                  <h2 className="font-headline-md text-headline-md font-bold">Retrieval Results</h2>
+                  <div className="flex flex-wrap gap-4 bg-surface-container-low p-3 rounded-lg border border-outline-variant">
+                    <div className="px-4 border-r border-outline-variant">
+                      <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Search Type</p>
+                      <p className="text-label-md text-on-surface font-semibold capitalize">{searchType}</p>
+                    </div>
+                    <div className="px-4 border-r border-outline-variant">
+                      <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Query</p>
+                      <p className="text-label-md text-on-surface font-semibold max-w-[200px] truncate">{query}</p>
+                    </div>
+                    <div className="px-4 border-r border-outline-variant">
+                      <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Top-K</p>
+                      <p className="text-label-md text-on-surface font-semibold">{topK}</p>
+                    </div>
+                    <div className="px-4">
+                      <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Results</p>
+                      <p className="text-label-md text-on-surface font-semibold">{results.length}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full">
+                  {results.map((video, idx) => (
+                    <VideoCard
+                      key={idx}
+                      title={video.title}
+                      imageSrc={assetUrl(video.thumbnail_url)}
+                      score={video.score}
+                      category={video.category}
+                      onClick={() => setSelectedVideo(video)}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </section>
         )}
