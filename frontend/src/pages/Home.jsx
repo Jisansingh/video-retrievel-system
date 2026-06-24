@@ -24,6 +24,7 @@ export default function Home() {
   const [searchType, setSearchType] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [searchParams] = useSearchParams();
   const [topK, setTopK] = useState(5);
   const [hasSearched, setHasSearched] = useState(false);
@@ -174,7 +175,7 @@ export default function Home() {
                         imageSrc={assetUrl(video.thumbnail_url)}
                         score={video.score}
                         category={video.category}
-                        onClick={() => setSelectedVideo(video)}
+                        onClick={() => { setSelectedVideo(video); setSelectedIndex(idx); }}
                       />
                     ))}
                   </div>
@@ -227,7 +228,14 @@ export default function Home() {
         )}
       </main>
 
-      <VideoModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />
+      <VideoModal
+        video={selectedVideo}
+        onClose={() => { setSelectedVideo(null); setSelectedIndex(-1); }}
+        results={results}
+        currentIndex={selectedIndex}
+        searchType={searchType}
+        onNavigate={(idx) => { setSelectedVideo(results[idx]); setSelectedIndex(idx); }}
+      />
 
       {/* Footer */}
       <footer className="w-full py-8 px-6 bg-surface-container-low dark:bg-surface-dim border-t border-outline-variant dark:border-outline mt-auto">

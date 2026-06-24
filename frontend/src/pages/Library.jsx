@@ -14,6 +14,7 @@ export default function Library() {
   const [libraryData, setLibraryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
@@ -103,7 +104,10 @@ export default function Library() {
                   key={video.title + idx}
                   title={video.title}
                   imageSrc={assetUrl(video.thumbnail_url)}
-                  onClick={() => setSelectedVideo(video)}
+                  onClick={() => {
+                    setSelectedVideo(video);
+                    setSelectedIndex(idx);
+                  }}
                 />
               ))}
             </div>
@@ -122,7 +126,13 @@ export default function Library() {
         )}
       </main>
 
-      <VideoModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />
+      <VideoModal
+        video={selectedVideo}
+        onClose={() => { setSelectedVideo(null); setSelectedIndex(-1); }}
+        results={visibleVideos}
+        currentIndex={selectedIndex}
+        onNavigate={(idx) => { setSelectedVideo(visibleVideos[idx]); setSelectedIndex(idx); }}
+      />
 
       {/* Footer */}
       <footer className="w-full py-8 px-6 bg-surface-container-low dark:bg-surface-dim border-t border-outline-variant dark:border-outline mt-auto">
