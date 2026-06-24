@@ -19,8 +19,8 @@ from dataclasses import dataclass
 
 import faiss
 import numpy as np
-
-from ml_pipeline.search_index import search_videos as ml_search_videos
+import clip
+import torch
 
 
 @dataclass(frozen=True)
@@ -104,28 +104,19 @@ def search_similar(
     query_embedding: np.ndarray,
     top_k: int = 5,
 ) -> list[SearchResult]:
-    """Search the FAISS index for the top-k most similar videos.
-
-    Args:
-        query_embedding: A 1D numpy float32 array (already L2-normalized).
-        top_k: Number of results to return. Clamped to the index size.
-
-    Returns:
-        A list of SearchResult objects sorted by descending similarity score.
-    """
+    """Search the FAISS index for the top-k most similar videos."""
     index = get_index()
     metadata = get_metadata()
 
     top_k = min(top_k, index.ntotal)
 
-    # FAISS expects shape (1, dim) for a single query
     query = np.expand_dims(query_embedding, axis=0).astype(np.float32)
     distances, indices = index.search(query, top_k)
 
     results: list[SearchResult] = []
     for dist, idx in zip(distances[0], indices[0]):
         if idx == -1:
-            continue  # FAISS returns -1 when there are fewer results than top_k
+            continue
         results.append(SearchResult(video_filename=metadata[idx], score=float(dist)))
 
     return results
@@ -135,5 +126,38 @@ def search_similar(
 # Text search wrapper — delegates to the ML pipeline.
 # ---------------------------------------------------------------------------
 def text_search(query: str, top_k: int = 5) -> list[dict]:
-    """Search for videos by natural-language query. Raises ValueError on empty input."""
-    return ml_search_videos(query, top_k=top_k)
+    """Search for videos by natural-language query. Uses the already-loaded
+    CLIP model (from backend.model) and FAISS index (from backend.search)
+    so we never load a second copy of either library."""
+    from backend.model import get_model as _get_clip_model, DEVICE as _CLIP_DEVICE
+
+    # 1. Reuse the already-loaded CLIP model for text encoding
+    _model, _ = _get_clip_model()
+
+    tokens = clip.tokenize([query], truncate=True).to(_CLIP_DEVICE)
+
+    with torch.no_grad():
+        text_embedding = _model.encode_text(tokens)
+
+    # 2. L2-normalize
+    vector = text_embedding.cpu().numpy().astype(np.float32).flatten()
+    norm = np.linalg.norm(vector)
+    if norm > 0:
+        vector = vector / norm
+
+    # 3. Search with the already-loaded FAISS index
+    results_sr = search_similar(vector, top_k=top_k)
+
+    # 4. Convert SearchResult dataclasses to dicts matching ml_pipeline format
+    results: list[dict] = []
+    for rank, r in enumerate(results_sr, start=1):
+        video_name = r.video_filename
+        category = video_name.split("/")[0] if "/" in video_name else "unknown"
+        results.append({
+            "rank": rank,
+            "video": video_name,
+            "category": category,
+            "score": round(r.score, 4),
+        })
+
+    return results

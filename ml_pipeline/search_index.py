@@ -66,35 +66,22 @@ def _init() -> None:
 # Search
 # ---------------------------------------------------------------------------
 def search(query_text: str, top_k: int = DEFAULT_TOP_K) -> list[dict]:
-    """Return top-k videos matching *query_text* ranked by cosine similarity.
-
-    Args:
-        query_text: Natural language description (e.g. "cars driving").
-        top_k: Number of results to return.
-
-    Returns:
-        List of dicts with keys: rank, video, category, score.
-    """
+    """Return top-k videos matching *query_text* ranked by cosine similarity."""
     _init()
 
-    # 1. Tokenize and encode the text query
     tokens = clip.tokenize([query_text], truncate=True).to(DEVICE)
     with torch.no_grad():
         text_embedding = _model.encode_text(tokens)
 
-    # 2. L2-normalize so inner product = cosine similarity
-    #    (the index vectors were also L2-normalized before insertion)
     vector = text_embedding.cpu().numpy().astype(np.float32).flatten()
     norm = np.linalg.norm(vector)
     if norm > 0:
         vector = vector / norm
 
-    # 3. Search FAISS
     top_k = min(top_k, _index.ntotal)
     query = np.expand_dims(vector, axis=0)
     distances, indices = _index.search(query, top_k)
 
-    # 4. Build results
     results: list[dict] = []
     for rank, (dist, idx) in enumerate(zip(distances[0], indices[0]), start=1):
         video_name = _metadata[idx] if idx < len(_metadata) else "unknown"

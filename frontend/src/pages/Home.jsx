@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Lightbulb } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import SearchTabs from '../components/SearchTabs';
 import VideoCard from '../components/VideoCard';
@@ -141,42 +142,86 @@ export default function Home() {
             )}
 
             {!loading && results.length > 0 && (
-              <>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                  <h2 className="font-headline-md text-headline-md font-bold">Retrieval Results</h2>
-                  <div className="flex flex-wrap gap-4 bg-surface-container-low p-3 rounded-lg border border-outline-variant">
-                    <div className="px-4 border-r border-outline-variant">
-                      <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Search Type</p>
-                      <p className="text-label-md text-on-surface font-semibold capitalize">{searchType}</p>
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="flex-1 lg:w-3/4 min-w-0">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <h2 className="font-headline-md text-headline-md font-bold">Retrieval Results</h2>
+                    <div className="flex flex-wrap gap-4 bg-surface-container-low p-3 rounded-lg border border-outline-variant">
+                      <div className="px-4 border-r border-outline-variant">
+                        <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Search Type</p>
+                        <p className="text-label-md text-on-surface font-semibold capitalize">{searchType}</p>
+                      </div>
+                      <div className="px-4 border-r border-outline-variant">
+                        <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Query</p>
+                        <p className="text-label-md text-on-surface font-semibold max-w-[200px] truncate">{query}</p>
+                      </div>
+                      <div className="px-4 border-r border-outline-variant">
+                        <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Top-K</p>
+                        <p className="text-label-md text-on-surface font-semibold">{topK}</p>
+                      </div>
+                      <div className="px-4">
+                        <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Results</p>
+                        <p className="text-label-md text-on-surface font-semibold">{results.length}</p>
+                      </div>
                     </div>
-                    <div className="px-4 border-r border-outline-variant">
-                      <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Query</p>
-                      <p className="text-label-md text-on-surface font-semibold max-w-[200px] truncate">{query}</p>
-                    </div>
-                    <div className="px-4 border-r border-outline-variant">
-                      <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Top-K</p>
-                      <p className="text-label-md text-on-surface font-semibold">{topK}</p>
-                    </div>
-                    <div className="px-4">
-                      <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Results</p>
-                      <p className="text-label-md text-on-surface font-semibold">{results.length}</p>
-                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
+                    {results.map((video, idx) => (
+                      <VideoCard
+                        key={idx}
+                        title={video.title}
+                        imageSrc={assetUrl(video.thumbnail_url)}
+                        score={video.score}
+                        category={video.category}
+                        onClick={() => setSelectedVideo(video)}
+                      />
+                    ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 w-full">
-                  {results.map((video, idx) => (
-                    <VideoCard
-                      key={idx}
-                      title={video.title}
-                      imageSrc={assetUrl(video.thumbnail_url)}
-                      score={video.score}
-                      category={video.category}
-                      onClick={() => setSelectedVideo(video)}
-                    />
-                  ))}
+                <div className="lg:w-1/4 flex flex-col gap-6">
+                  <div className="bg-surface-container-low rounded-xl p-5 soft-shadow border border-outline-variant/30">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Lightbulb className="w-4 h-4 text-primary shrink-0" strokeWidth={2} />
+                      <h3 className="font-headline-sm text-headline-sm font-semibold">How Matching Works</h3>
+                    </div>
+                    <p className="text-body-sm text-on-surface-variant leading-relaxed mb-3">
+                      VidShazam uses CLIP embeddings to transform text, images, and videos into a shared semantic vector space. FAISS performs nearest-neighbor retrieval on 512-dimensional embeddings to identify the most relevant video matches. Similarity scores represent semantic closeness rather than exact visual duplication.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-label-sm border border-outline-variant font-medium">CLIP</span>
+                      <span className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-label-sm border border-outline-variant font-medium">FAISS</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-surface-container-low rounded-xl p-5 soft-shadow border border-outline-variant/30">
+                    <h3 className="font-headline-sm text-headline-sm font-semibold mb-4">Match Score Guide</h3>
+                    <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-teal-700 shrink-0"></div>
+                        <span className="text-body-sm font-medium text-on-surface">90–100%</span>
+                      </div>
+                      <span className="text-body-sm text-on-surface-variant">Excellent Match</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0"></div>
+                        <span className="text-body-sm font-medium text-on-surface">70–89%</span>
+                      </div>
+                      <span className="text-body-sm text-on-surface-variant">Good Match</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></div>
+                        <span className="text-body-sm font-medium text-on-surface">50–69%</span>
+                      </div>
+                      <span className="text-body-sm text-on-surface-variant">Moderate Match</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0"></div>
+                        <span className="text-body-sm font-medium text-on-surface">0–49%</span>
+                      </div>
+                      <span className="text-body-sm text-on-surface-variant">Low Match</span>
+                    </div>
+                  </div>
                 </div>
-              </>
+              </div>
             )}
           </section>
         )}

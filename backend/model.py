@@ -67,32 +67,16 @@ def get_model():
 
 
 def generate_embedding(image: Image.Image) -> np.ndarray:
-    """Convert a PIL Image into a normalized CLIP embedding vector.
-
-    Args:
-        image: A PIL Image (RGB). Caller is responsible for ensuring the
-               image is already opened and validated.
-
-    Returns:
-        A 1D numpy float32 array (shape: 512) that is L2-normalized so
-        its dot product with another normalized vector gives cosine
-        similarity in [-1, 1].
-
-    Raises:
-        RuntimeError: If the model has not been initialized.
-    """
+    """Convert a PIL Image into a normalized CLIP embedding vector."""
     model, preprocess = get_model()
 
-    # preprocess returns a tensor; add batch dim so shape is (1, 3, 224, 224)
     image_tensor = preprocess(image).unsqueeze(0).to(DEVICE)
 
     with torch.no_grad():
         embedding = model.encode_image(image_tensor)
 
-    # Move to CPU, convert to float32 numpy, squeeze batch dim
     vector = embedding.cpu().numpy().astype(np.float32).flatten()
 
-    # L2 normalize so FAISS IndexFlatIP gives cosine similarity
     norm = np.linalg.norm(vector)
     if norm > 0:
         vector = vector / norm

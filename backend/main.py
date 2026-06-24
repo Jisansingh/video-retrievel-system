@@ -18,6 +18,15 @@ Endpoints:
 from __future__ import annotations
 
 import os
+
+# macOS OpenMP workaround: PyTorch and faiss-cpu each ship their own
+# libomp.dylib. Loading both in the same process triggers:
+#   OMP: Error #15: Initializing libomp.dylib, but found libomp.dylib
+#   already initialized.
+# This env var tells the Intel OpenMP runtime to allow a second copy,
+# which resolves the conflict without recompiling either library.
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+
 from contextlib import asynccontextmanager
 
 import cv2

@@ -22,9 +22,9 @@ export default function Navbar() {
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path;
             return (
-              <Link 
+              <Link
                 key={link.name}
-                className={`font-body-md text-body-md transition-colors ${isActive ? 'text-primary font-bold' : 'text-on-surface hover:text-primary font-semibold'}`} 
+                className={`font-body-md text-body-md transition-colors ${isActive ? 'text-primary font-bold' : 'text-on-surface hover:text-primary font-semibold'}`}
                 to={link.path}
               >
                 {link.name}
