@@ -35,7 +35,7 @@ export default function SearchTabs({ onTextSearch, onImageSearch, onVideoSearch,
   };
 
   return (
-    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant soft-shadow overflow-hidden relative shadow-lg">
+    <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant soft-shadow relative shadow-lg">
       <div className="flex border-b border-outline-variant relative bg-surface-container-low/50">
         <button 
           className={`flex-1 py-5 sm:py-6 font-label-md transition-colors cursor-pointer text-sm sm:text-base font-semibold ${activeTab === 'text' ? 'text-primary' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low'}`} 
@@ -63,7 +63,7 @@ export default function SearchTabs({ onTextSearch, onImageSearch, onVideoSearch,
       <div className="p-6 sm:p-10">
         {/* Text Search Panel */}
         {activeTab === 'text' && (
-          <SearchBar onSearch={onTextSearch} topK={topK} onTopKChange={onTopKChange} />
+          <SearchBar onSearch={(query, isFrame) => onTextSearch(query, isFrame)} topK={topK} onTopKChange={onTopKChange} />
         )}
         
         {/* Image Search Panel */}

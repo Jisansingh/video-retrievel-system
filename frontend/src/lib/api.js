@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL;
+export const API_URL = import.meta.env.VITE_API_URL;
 
 console.log('[API] VITE_API_URL =', API_URL);
 
@@ -33,6 +33,10 @@ export function getLibrary() {
 
 export function textSearch(query, topK = 5) {
   return client.get('/search', { params: { query, top_k: topK } }).then(res => res.data);
+}
+
+export function frameSearch(query, topK = 12) {
+  return client.get('/search/frames', { params: { query, top_k: topK } }).then(res => res.data);
 }
 
 export function imageSearch(file, topK = 5) {

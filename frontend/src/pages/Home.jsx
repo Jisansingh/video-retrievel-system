@@ -6,7 +6,8 @@ import SearchTabs from '../components/SearchTabs';
 import VideoCard from '../components/VideoCard';
 import VideoModal from '../components/VideoModal';
 import { Link } from 'react-router-dom';
-import { textSearch, imageSearch, videoSearch, assetUrl } from '../lib/api';
+import { textSearch, imageSearch, videoSearch, frameSearch, assetUrl } from '../lib/api';
+import FrameCard from '../components/FrameCard';
 
 function saveToHistory(entry) {
   try {
@@ -25,21 +26,31 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [matchedFrameUrl, setMatchedFrameUrl] = useState(null);
   const [searchParams] = useSearchParams();
   const [topK, setTopK] = useState(5);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleTextSearch = async (q) => {
+  const handleTextSearch = async (q, isFrame) => {
     setLoading(true);
-    setSearchType('text');
     setQuery(q);
     setHasSearched(true);
+    setSearchType(isFrame ? 'frames' : 'text');
+
     try {
-      console.log('[Search] text search query:', q, 'top_k:', topK);
-      const data = await textSearch(q, topK);
-      console.log('[Search] response', data);
-      setResults(data.results || []);
-      saveToHistory({ type: 'text', query: q });
+      if (isFrame) {
+        console.log('[Search] frame search query:', q, 'top_k:', topK);
+        const data = await frameSearch(q, topK);
+        console.log('[Search] frame response', data);
+        setResults(data.results || []);
+        saveToHistory({ type: 'frames', query: q });
+      } else {
+        console.log('[Search] text search query:', q, 'top_k:', topK);
+        const data = await textSearch(q, topK);
+        console.log('[Search] response', data);
+        setResults(data.results || []);
+        saveToHistory({ type: 'text', query: q });
+      }
     } catch (err) {
       console.error('[Search] FAILED:', err.message);
       setResults([]);
@@ -147,18 +158,10 @@ export default function Home() {
                 <div className="flex-1 lg:w-3/4 min-w-0">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <h2 className="font-headline-md text-headline-md font-bold">Retrieval Results</h2>
-                    <div className="flex flex-wrap gap-4 bg-surface-container-low p-3 rounded-lg border border-outline-variant">
+                    <div className="flex items-center gap-4 bg-surface-container-low p-3 rounded-lg border border-outline-variant">
                       <div className="px-4 border-r border-outline-variant">
                         <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Search Type</p>
-                        <p className="text-label-md text-on-surface font-semibold capitalize">{searchType}</p>
-                      </div>
-                      <div className="px-4 border-r border-outline-variant">
-                        <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Query</p>
-                        <p className="text-label-md text-on-surface font-semibold max-w-[200px] truncate">{query}</p>
-                      </div>
-                      <div className="px-4 border-r border-outline-variant">
-                        <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Top-K</p>
-                        <p className="text-label-md text-on-surface font-semibold">{topK}</p>
+                        <p className="text-label-md text-on-surface font-semibold capitalize">{searchType === 'frames' ? 'Frame Search' : searchType === 'text' ? 'Video Search' : searchType}</p>
                       </div>
                       <div className="px-4">
                         <p className="text-label-sm text-outline-variant uppercase tracking-wider mb-1">Results</p>
@@ -168,16 +171,29 @@ export default function Home() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
-                    {results.map((video, idx) => (
-                      <VideoCard
-                        key={idx}
-                        title={video.title}
-                        imageSrc={assetUrl(video.thumbnail_url)}
-                        score={video.score}
-                        category={video.category}
-                        onClick={() => { setSelectedVideo(video); setSelectedIndex(idx); }}
-                      />
-                    ))}
+                    {results.map((item, idx) =>
+                      searchType === 'frames' ? (
+                        <FrameCard
+                          key={idx}
+                          frameUrl={item.frame_url}
+                          video={item.video}
+                          videoTitle={`${item.video.split('/').pop()}.mp4`}
+                          timestamp={item.timestamp}
+                          category={item.category}
+                          score={item.score}
+                          onClick={() => { setSelectedVideo({ ...item, title: `${item.video.split('/').pop()}.mp4`, thumbnail_url: item.frame_url }); setMatchedFrameUrl(item.frame_url); setSelectedIndex(idx); }}
+                        />
+                      ) : (
+                        <VideoCard
+                          key={idx}
+                          title={item.title}
+                          imageSrc={assetUrl(item.thumbnail_url)}
+                          score={item.score}
+                          category={item.category}
+                          onClick={() => { setSelectedVideo(item); setSelectedIndex(idx); }}
+                        />
+                      )
+                    )}
                   </div>
                 </div>
 
@@ -230,11 +246,22 @@ export default function Home() {
 
       <VideoModal
         video={selectedVideo}
-        onClose={() => { setSelectedVideo(null); setSelectedIndex(-1); }}
+        frameUrl={matchedFrameUrl}
+        onClose={() => { setSelectedVideo(null); setSelectedIndex(-1); setMatchedFrameUrl(null); }}
         results={results}
         currentIndex={selectedIndex}
         searchType={searchType}
-        onNavigate={(idx) => { setSelectedVideo(results[idx]); setSelectedIndex(idx); }}
+        initialTimestamp={selectedVideo?.timestamp}
+        onNavigate={(idx) => {
+          const item = results[idx];
+          if (searchType === 'frames') {
+            setSelectedVideo({ ...item, title: `${item.video.split('/').pop()}.mp4`, thumbnail_url: item.frame_url });
+            setMatchedFrameUrl(item.frame_url);
+          } else {
+            setSelectedVideo(item);
+          }
+          setSelectedIndex(idx);
+        }}
       />
 
       {/* Footer */}

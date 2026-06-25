@@ -26,6 +26,7 @@ export default function History() {
   const textSearches = history.filter(h => h.type === 'text');
   const imageSearches = history.filter(h => h.type === 'image');
   const videoSearches = history.filter(h => h.type === 'video');
+  const frameSearches = history.filter(h => h.type === 'frames');
 
   const handleRerunText = (query) => {
     navigate(`/search?query=${encodeURIComponent(query)}`);
@@ -122,6 +123,38 @@ export default function History() {
                           className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-container hover:bg-surface-variant text-primary transition-colors border border-outline-variant hover:border-primary"
                           title="Go to Search"
                           onClick={() => navigate('/search')}
+                        >
+                          <span className="text-lg leading-none">⟳</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Frame Searches Section */}
+            {frameSearches.length > 0 && (
+              <section>
+                <div className="mb-6 border-b border-outline-variant pb-4">
+                  <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">Frame Searches</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {frameSearches.map((entry, idx) => (
+                    <div key={idx} className="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl hover:shadow-md hover:border-primary transition-colors flex flex-col justify-between h-full">
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-teal-600 font-label-sm text-label-sm uppercase tracking-wider">Frame Query</span>
+                          <span className="font-body-sm text-body-sm text-outline">{formatDate(entry.timestamp)}</span>
+                        </div>
+                        <p className="font-body-md text-body-md text-on-surface mb-6 italic">"{entry.query}"</p>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-outline-variant pt-4 mt-auto">
+                        <div className="text-on-surface-variant font-body-sm text-body-sm">Frame search</div>
+                        <button
+                          className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-container hover:bg-surface-variant text-primary transition-colors border border-outline-variant hover:border-primary"
+                          title="Re-run Search"
+                          onClick={() => handleRerunText(entry.query)}
                         >
                           <span className="text-lg leading-none">⟳</span>
                         </button>

@@ -36,8 +36,14 @@ DEFAULT_INDEX_DIR = os.path.abspath(
 DEFAULT_INDEX_PATH = os.path.join(DEFAULT_INDEX_DIR, "video_index.faiss")
 DEFAULT_METADATA_PATH = os.path.join(DEFAULT_INDEX_DIR, "video_metadata.json")
 
+FRAME_INDEX_PATH = os.path.join(DEFAULT_INDEX_DIR, "frame_faiss.index")
+FRAME_METADATA_PATH = os.path.join(DEFAULT_INDEX_DIR, "frame_metadata.json")
+
 _index: faiss.Index | None = None
 _metadata: list[str] | None = None
+
+_frame_index: faiss.Index | None = None
+_frame_metadata: list[dict] | None = None
 
 
 def init_index(
@@ -119,6 +125,107 @@ def search_similar(
             continue
         results.append(SearchResult(video_filename=metadata[idx], score=float(dist)))
 
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Frame FAISS index — loaded separately from the video index.
+# ---------------------------------------------------------------------------
+def init_frame_index(
+    index_path: str | None = None,
+    metadata_path: str | None = None,
+) -> None:
+    global _frame_index, _frame_metadata
+
+    ipath = index_path or FRAME_INDEX_PATH
+    mpath = metadata_path or FRAME_METADATA_PATH
+
+    if not os.path.exists(ipath):
+        raise FileNotFoundError(
+            f"Frame FAISS index not found at {ipath}. "
+            "Run generate_frame_embeddings.py first."
+        )
+    if not os.path.exists(mpath):
+        raise FileNotFoundError(
+            f"Frame metadata not found at {mpath}. "
+            "Run generate_frame_embeddings.py first."
+        )
+
+    _frame_index = faiss.read_index(ipath)
+    with open(mpath, "r") as f:
+        _frame_metadata = json.load(f)
+
+    if not isinstance(_frame_metadata, list):
+        raise ValueError("frame_metadata.json must be a JSON list.")
+
+    if _frame_index.ntotal != len(_frame_metadata):
+        raise ValueError(
+            f"Frame index has {_frame_index.ntotal} vectors but metadata has "
+            f"{len(_frame_metadata)} entries."
+        )
+
+    print(f"[search] Frame FAISS index loaded: {_frame_index.ntotal} vectors, dim={_frame_index.d}")
+
+
+def get_frame_index() -> faiss.Index:
+    global _frame_index
+    if _frame_index is None:
+        raise RuntimeError("Frame FAISS index not initialized. Call init_frame_index() first.")
+    return _frame_index
+
+
+def get_frame_metadata() -> list[dict]:
+    global _frame_metadata
+    if _frame_metadata is None:
+        raise RuntimeError("Frame metadata not initialized. Call init_frame_index() first.")
+    return _frame_metadata
+
+
+def search_frame_similar(
+    query_embedding: np.ndarray,
+    top_k: int = 12,
+) -> list[dict]:
+    """Search the frame FAISS index for the top-k most similar frames."""
+    index = get_frame_index()
+    metadata = get_frame_metadata()
+
+    top_k = min(top_k, index.ntotal)
+
+    query = np.expand_dims(query_embedding, axis=0).astype(np.float32)
+    distances, indices = index.search(query, top_k)
+
+    results: list[dict] = []
+    for dist, idx in zip(distances[0], indices[0]):
+        if idx == -1:
+            continue
+        entry = dict(metadata[idx])
+        entry["score"] = round(float(dist), 4)
+        results.append(entry)
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Text-to-frame search wrapper.
+# ---------------------------------------------------------------------------
+def frame_text_search(query: str, top_k: int = 12) -> list[dict]:
+    """Search frames by natural-language query using the already-loaded CLIP
+    model and frame FAISS index."""
+    from backend.model import get_model as _get_clip_model, DEVICE as _CLIP_DEVICE
+
+    _model, _ = _get_clip_model()
+
+    tokens = clip.tokenize([query], truncate=True).to(_CLIP_DEVICE)
+
+    with torch.no_grad():
+        text_embedding = _model.encode_text(tokens)
+
+    vector = text_embedding.cpu().numpy().astype(np.float32).flatten()
+    norm = np.linalg.norm(vector)
+    if norm > 0:
+        vector = vector / norm
+
+    results = search_frame_similar(vector, top_k=top_k)
     return results
 
 

@@ -32,12 +32,13 @@ from contextlib import asynccontextmanager
 import cv2
 import numpy as np
 from fastapi import FastAPI, File, UploadFile, Query, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
 
 from backend.model import init_model, generate_embedding
-from backend.search import init_index, search_similar, text_search
+from backend.search import init_index, search_similar, text_search, init_frame_index, frame_text_search
 from backend.utils import validate_image, validate_video, save_temp_image, cleanup_temp_file
 from ml_pipeline.config import VIDEOS_DIR, FRAMES_DIR
 
@@ -50,6 +51,7 @@ async def lifespan(app: FastAPI):
     """Load CLIP model and FAISS index before the app starts accepting requests."""
     init_model()
     init_index()
+    init_frame_index()
     yield
     # No explicit teardown needed; Python GC handles torch/faiss cleanup.
 
@@ -63,7 +65,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex="https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?",
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -125,6 +132,20 @@ def _video_ext(category: str, stem: str) -> str:
     return ".mp4"
 
 
+def _enrich_frame(frame_data: dict) -> dict:
+    """Add url fields to a frame search result."""
+    category, stem = frame_data["video"].split("/", 1)
+    ext = _video_ext(category, stem)
+    return {
+        "frame_url": f"/frames/{frame_data['frame_path']}",
+        "video": frame_data["video"],
+        "video_url": f"/videos/{category}/{stem}{ext}",
+        "timestamp": frame_data["timestamp"],
+        "category": frame_data["category"],
+        "score": frame_data["score"],
+    }
+
+
 def _enrich_video(video_path: str) -> dict:
     """Build frontend-facing fields from a metadata video path (e.g. 'animals/animals_0')."""
     category, stem = video_path.split("/", 1)
@@ -174,6 +195,24 @@ async def text_search_endpoint(
 
     for r in results:
         r.update(_enrich_video(r["video"]))
+
+    return {"query": query.strip(), "results": results}
+
+
+@app.get("/search/frames")
+async def frame_search_endpoint(
+    query: str = Query(..., min_length=1, description="Natural-language query for frame search"),
+    top_k: int = Query(default=12, ge=1, le=50, description="Number of frame results"),
+):
+    """Search for frames matching a text description."""
+    try:
+        raw_results = frame_text_search(query.strip(), top_k=top_k)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Frame search failed: {e}")
+
+    results = [_enrich_frame(r) for r in raw_results]
 
     return {"query": query.strip(), "results": results}
 
@@ -268,3 +307,23 @@ async def library():
             categories[cat_name] = entries
 
     return categories
+
+
+@app.get("/download/frame")
+async def download_frame(path: str):
+    """Download a matched frame as a .jpg file.
+
+    Forces browser download via Content-Disposition: attachment.
+    Validates the path to prevent directory traversal.
+    """
+    frame_path = os.path.normpath(os.path.join(FRAMES_DIR, path))
+    if not frame_path.startswith(FRAMES_DIR):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    if not os.path.isfile(frame_path):
+        raise HTTPException(status_code=404, detail="Frame not found")
+
+    return FileResponse(
+        frame_path,
+        media_type="image/jpeg",
+        filename=os.path.basename(frame_path),
+    )

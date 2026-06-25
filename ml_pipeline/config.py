@@ -33,6 +33,11 @@ VIDEO_METADATA_FILE = os.path.join(EMBEDDINGS_DIR, "video_metadata.json")
 FAISS_INDEX_FILE = os.path.join(INDEXES_DIR, "video_index.faiss")
 INDEX_METADATA_FILE = os.path.join(INDEXES_DIR, "video_metadata.json")
 
+FRAME_EMBEDDINGS_FILE = os.path.join(EMBEDDINGS_DIR, "frame_embeddings.npy")
+FRAME_METADATA_FILE = os.path.join(EMBEDDINGS_DIR, "frame_metadata.json")
+FRAME_FAISS_INDEX_FILE = os.path.join(INDEXES_DIR, "frame_faiss.index")
+FRAME_INDEX_METADATA_FILE = os.path.join(INDEXES_DIR, "frame_metadata.json")
+
 # ---------------------------------------------------------------------------
 # Feature-extraction tuning
 # ---------------------------------------------------------------------------

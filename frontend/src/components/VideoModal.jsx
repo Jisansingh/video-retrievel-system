@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   X, Play, Pause, Volume2, Volume1, VolumeX, Maximize,
-  ChevronLeft, ChevronRight, Clock, Film, MoreVertical
+  ChevronLeft, ChevronRight, Clock, Film, MoreVertical, Download
 } from 'lucide-react';
-import { assetUrl } from '../lib/api';
+import { assetUrl, API_URL } from '../lib/api';
 
 function formatTime(t) {
   if (!t || isNaN(t)) return '00:00';
@@ -25,6 +25,11 @@ function getFrameThumbs(video) {
   return Array.from({ length: 8 }, (_, i) =>
     `/frames/${video.video}/frame_${String(i).padStart(5, '0')}.jpg`
   );
+}
+
+function extractRelativeFramePath(frameUrl) {
+  if (!frameUrl) return '';
+  return frameUrl.replace(/^\/frames\//, '');
 }
 
 function isValidValue(val) {
@@ -49,11 +54,13 @@ const Skip10ForwardIcon = () => (
   </svg>
 );
 
-export default function VideoModal({ video, onClose, results = [], currentIndex = -1, onNavigate, searchType }) {
+export default function VideoModal({ video, frameUrl, onClose, results = [], currentIndex = -1, onNavigate, searchType, initialTimestamp }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const menuRef = useRef(null);
   const menuButtonRef = useRef(null);
+  const matchedThumbRef = useRef(null);
+  const filmstripRef = useRef(null);
 
   const [playing, setPlaying] = useState(true);
   const [time, setTime] = useState(0);
@@ -63,7 +70,9 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
   const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [hasSeeked, setHasSeeked] = useState(false);
 
+  const isFrameSearch = searchType === 'frames';
   const url = assetUrl(video?.video_url);
   const pct = video?.score != null ? Math.round(video.score * 100) : null;
   const cfg = getScoreConfig(pct);
@@ -72,6 +81,9 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < total - 1;
   const hlFrame = dur > 0 ? Math.min(frames.length - 1, Math.floor((time / dur) * frames.length)) : 0;
+  const matchedFrameIdx = (initialTimestamp != null && dur > 0)
+    ? Math.min(frames.length - 1, Math.floor((initialTimestamp / dur) * frames.length))
+    : -1;
 
   useEffect(() => {
     const el = videoRef.current;
@@ -101,6 +113,39 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
       el.playbackRate = speed;
     }
   }, [video, speed]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || initialTimestamp == null) return;
+
+    setHasSeeked(false);
+
+    const seekAndPause = () => {
+      const t = Math.min(initialTimestamp, el.duration || 0);
+      el.currentTime = t;
+      if (isFrameSearch) {
+        el.pause();
+        setPlaying(false);
+      } else {
+        el.play().catch(() => {});
+        setPlaying(true);
+      }
+      setHasSeeked(true);
+      el.removeEventListener('loadedmetadata', seekAndPause);
+    };
+
+    if (el.readyState >= 1) {
+      seekAndPause();
+    } else {
+      el.addEventListener('loadedmetadata', seekAndPause);
+    }
+  }, [video, initialTimestamp, isFrameSearch]);
+
+  useEffect(() => {
+    if (matchedFrameIdx >= 0 && matchedThumbRef.current && filmstripRef.current) {
+      matchedThumbRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [matchedFrameIdx, video]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -194,7 +239,7 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
     }
   };
 
-  const handleDownload = () => {
+  const handleDownloadVideo = () => {
     const link = document.createElement('a');
     link.href = url;
     link.download = video?.title || 'video.mp4';
@@ -202,6 +247,22 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
     link.click();
     document.body.removeChild(link);
     setMenuOpen(false);
+  };
+
+  const handleDownloadFrame = () => {
+    const frameUrlToDownload = frameUrl || video?.frame_url;
+    if (!frameUrlToDownload) return;
+
+    const relativePath = extractRelativeFramePath(frameUrlToDownload);
+    const downloadUrl = `${API_URL}/download/frame?path=${encodeURIComponent(relativePath)}`;
+    console.log("Matched frame:", frameUrlToDownload);
+    console.log("Downloading:", downloadUrl);
+
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleBgClick = (e) => {
@@ -213,7 +274,7 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
   return (
     <div ref={containerRef} className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs" onClick={handleBgClick}>
       <div className="bg-surface-container-lowest rounded-3xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl border border-outline-variant/30" onClick={e => e.stopPropagation()}>
-        
+
         {/* Header Bar */}
         <div className="flex items-center gap-4 px-6 py-4 shrink-0 relative border-b border-outline-variant/20 bg-surface-container-lowest">
           <img className="w-12 h-12 rounded-lg object-cover shrink-0 border border-outline-variant/50 shadow-sm" src={assetUrl(video.thumbnail_url)} alt="" />
@@ -233,8 +294,21 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
               </span>
             </div>
           </div>
+
+          {/* Download Frame (only for frame search results) */}
+          {isFrameSearch && (frameUrl || video?.frame_url) && (
+            <button
+              onClick={handleDownloadFrame}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-sm font-semibold text-teal-700 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 transition-all shrink-0"
+              title="Download matched frame"
+            >
+              <Download className="w-4 h-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Download Frame</span>
+            </button>
+          )}
+
           <button
-            className="absolute top-1/2 -translate-y-1/2 right-6 w-8 h-8 rounded-full text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors focus:outline-none"
+            className="w-8 h-8 rounded-full text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors focus:outline-none shrink-0"
             onClick={onClose}
             aria-label="Close modal"
           >
@@ -374,7 +448,7 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
                     >
                       <MoreVertical className="w-5 h-5" />
                     </button>
-                    
+
                     {/* Dropdown Menu */}
                     <div
                       ref={menuRef}
@@ -416,7 +490,7 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
 
                       {/* Download Video */}
                       <button
-                        onClick={handleDownload}
+                        onClick={handleDownloadVideo}
                         className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs font-semibold text-zinc-300 hover:bg-teal-500/10 hover:text-teal-400 transition-colors w-full cursor-pointer"
                       >
                         <span className="w-4 h-4 flex items-center justify-center shrink-0 text-sm">📥</span>
@@ -431,18 +505,27 @@ export default function VideoModal({ video, onClose, results = [], currentIndex 
 
           {/* Thumbnail Filmstrip */}
           {frames.length > 0 && (
-            <div className="px-6 py-5 bg-zinc-900 border-t border-zinc-800 flex gap-4 overflow-x-auto scrollbar-none select-none">
-              {frames.map((src, i) => (
-                <button
-                  key={i}
-                  onClick={() => seekFrame(i)}
-                  className={`relative shrink-0 w-32 aspect-video rounded-lg overflow-hidden border-4 transition-all duration-200 cursor-pointer ${
-                    i === hlFrame ? 'border-teal-500 scale-102 opacity-100 shadow-lg shadow-teal-500/20' : 'border-transparent opacity-50 hover:opacity-100 hover:scale-102 hover:border-teal-500/40'
-                  }`}
-                >
-                  <img className="w-full h-full object-cover" src={assetUrl(src)} alt="" loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
-                </button>
-              ))}
+            <div ref={filmstripRef} className="px-6 py-5 bg-zinc-900 border-t border-zinc-800 flex gap-4 overflow-x-auto scrollbar-none select-none">
+              {frames.map((src, i) => {
+                const isMatched = i === matchedFrameIdx;
+                const isCurrent = i === hlFrame;
+                return (
+                  <button
+                    key={i}
+                    ref={isMatched ? matchedThumbRef : null}
+                    onClick={() => seekFrame(i)}
+                    className={`relative shrink-0 w-32 aspect-video rounded-lg overflow-hidden border-4 transition-all duration-200 cursor-pointer ${
+                      isMatched
+                        ? 'border-teal-400 scale-105 opacity-100 shadow-lg shadow-teal-400/30 ring-2 ring-teal-400/50'
+                        : isCurrent
+                          ? 'border-teal-500 scale-102 opacity-100 shadow-lg shadow-teal-500/20'
+                          : 'border-transparent opacity-50 hover:opacity-100 hover:scale-102 hover:border-teal-500/40'
+                    }`}
+                  >
+                    <img className="w-full h-full object-cover" src={assetUrl(src)} alt="" loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
