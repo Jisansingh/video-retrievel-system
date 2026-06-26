@@ -1,6 +1,6 @@
 import Navbar from '../components/Navbar';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Languages, Image as ImageIcon, Film, Grid3X3, Eye, PlayCircle, Search, Brain, Database, ArrowUpDown } from 'lucide-react';
+import { CheckCircle, Languages, Image as ImageIcon, Film, Grid3X3, ScanSearch, PlayCircle, Search, Brain, Database, ArrowUpDown, BrainCircuit, Server, Terminal, Monitor, Palette, Network, Zap } from 'lucide-react';
 
 export default function About() {
   return (
@@ -13,7 +13,7 @@ export default function About() {
         <section className="text-center max-w-5xl mx-auto w-full">
           <h1 className="font-display-lg text-display-lg text-on-surface mb-6 font-bold">Multimodal Video Retrieval System</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-            A professional multimodal video retrieval platform leveraging CLIP vision-language models and FAISS vector similarity search for surgical precision across massive video archives.
+            A multimodal video retrieval system supporting text, image, video, and frame-level search using CLIP embeddings and FAISS similarity indexing.
           </p>
         </section>
 
@@ -23,32 +23,147 @@ export default function About() {
             <span className="text-primary font-label-sm uppercase tracking-widest font-bold">Platform Core</span>
             <h2 className="font-headline-lg text-headline-lg font-bold">Semantic Discovery Reimagined</h2>
             <p className="font-body-md text-on-surface-variant leading-relaxed text-lg">
-              Our system transcends traditional keyword-based searching by understanding the semantic relationship between visual content and linguistic descriptions. By mapping both videos and queries into a shared high-dimensional latent space, we enable fluid discovery across three distinct retrieval paradigms.
+              Our system transcends traditional keyword-based searching by understanding the semantic relationship between visual content and linguistic descriptions. By mapping videos, images, and text into a shared high-dimensional latent space, we enable fluid discovery across four distinct retrieval paradigms.
             </p>
             <ul className="flex flex-col gap-4 mt-2">
               <li className="flex items-start gap-4">
                 <CheckCircle className="text-primary w-6 h-6 shrink-0" />
-                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Text-to-Video Search — natural language understanding for complex descriptive queries.</span>
+                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Text-to-Video Search - natural language understanding for complex descriptive queries.</span>
               </li>
               <li className="flex items-start gap-4">
                 <CheckCircle className="text-primary w-6 h-6 shrink-0" />
-                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Image-to-Video Search — find visually similar content using a reference image.</span>
+                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Image-to-Video Search - find visually similar content using a reference image.</span>
               </li>
               <li className="flex items-start gap-4">
                 <CheckCircle className="text-primary w-6 h-6 shrink-0" />
-                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Video-to-Video Search — identify related sequences by providing a video clip.</span>
+                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Video-to-Video Search - identify related sequences by providing a video clip.</span>
+              </li>
+              <li className="flex items-start gap-4">
+                <CheckCircle className="text-primary w-6 h-6 shrink-0" />
+                <span className="font-body-md font-medium text-on-surface text-lg leading-snug">Text-to-Frame Search - locate the most relevant video frames for precise scene-level retrieval.</span>
               </li>
             </ul>
           </div>
-          <div className="flex flex-col gap-4 p-8 bg-surface-container-lowest rounded-2xl border border-outline-variant">
-            <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">Technology Stack</h3>
-            <div className="flex flex-wrap gap-3">
-              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">CLIP ViT-B/32</span>
-              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">FAISS</span>
-              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">FastAPI</span>
-              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">React</span>
-              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">Python</span>
-              <span className="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-label-md text-label-md font-semibold">Tailwind CSS</span>
+          {/* Technology Stack - Premium Dashboard Layout */}
+          <div className="flex flex-col bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
+            {/* Centered heading with decorative lines */}
+            <div className="flex items-center gap-4 px-6 pt-6 pb-4">
+              <div className="flex-1 h-px bg-primary/25"></div>
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary whitespace-nowrap">Technology Stack</span>
+              <div className="flex-1 h-px bg-primary/25"></div>
+            </div>
+
+            {/* Rows wrapper */}
+            <div className="flex flex-col gap-2.5 px-5 pb-5">
+
+              {/* AI & Retrieval Row */}
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-5">
+                {/* Category label — open, no harsh border */}
+                <div className="flex flex-col items-center justify-center gap-2 w-[88px] shrink-0">
+                  <div className="w-12 h-12 rounded-full border border-primary/20 bg-primary/8 flex items-center justify-center" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.07)'}}>
+                    <BrainCircuit className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary text-center leading-tight">AI &amp;<br/>Retrieval</span>
+                </div>
+
+                {/* Tech cards */}
+                <div className="flex flex-1 gap-2.5 min-w-0">
+                  <div className="flex items-center gap-3 flex-1 min-w-0 rounded-xl border border-gray-200/80 bg-white px-3.5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-primary/30">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.12)'}}>
+                      <Network className="w-7 h-7 text-primary" strokeWidth={1.5} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[14px] text-on-surface leading-tight">CLIP ViT-B/32</p>
+                      <p className="text-[11px] text-on-surface-variant/55 leading-snug mt-1">Vision-language model</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-1 min-w-0 rounded-xl border border-gray-200/80 bg-white px-3.5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-primary/30">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.12)'}}>
+                      <Database className="w-7 h-7 text-primary" strokeWidth={1.5} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[14px] text-on-surface leading-tight">FAISS</p>
+                      <p className="text-[11px] text-on-surface-variant/55 leading-snug mt-1">Vector similarity search</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Backend Row */}
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-5">
+                <div className="flex flex-col items-center justify-center gap-2 w-[88px] shrink-0">
+                  <div className="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.07)'}}>
+                    <Server className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary text-center leading-tight">Backend</span>
+                </div>
+
+                <div className="flex flex-1 gap-2.5 min-w-0">
+                  <div className="flex items-center gap-3 flex-1 min-w-0 rounded-xl border border-gray-200/80 bg-white px-3.5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-primary/30">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.12)'}}>
+                      <Zap className="w-7 h-7 text-primary" strokeWidth={1.5} fill="currentColor" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[14px] text-on-surface leading-tight">FastAPI</p>
+                      <p className="text-[11px] text-on-surface-variant/55 leading-snug mt-1">High-performance REST API</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-1 min-w-0 rounded-xl border border-gray-200/80 bg-white px-3.5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-primary/30">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.12)'}}>
+                      {/* Python official logo — monochrome SVG */}
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-primary" aria-hidden="true">
+                        <path d="M11.914 0C5.82 0 6.2 2.656 6.2 2.656l.007 2.752h5.814v.826H3.9S0 5.789 0 11.969C0 18.149 3.403 17.93 3.403 17.93h2.034v-2.875s-.11-3.402 3.347-3.402h5.766s3.236.052 3.236-3.13V3.127S18.33 0 11.914 0zm-3.2 1.809c.578 0 1.048.47 1.048 1.05s-.47 1.048-1.048 1.048c-.58 0-1.05-.47-1.05-1.048s.47-1.05 1.05-1.05z"/>
+                        <path d="M12.086 24c6.094 0 5.714-2.656 5.714-2.656l-.007-2.752H12V17.766h8.121S24 18.211 24 12.031C24 5.851 20.597 6.07 20.597 6.07h-2.034v2.875s.11 3.402-3.347 3.402H9.45s-3.236-.052-3.236 3.13v5.396S5.67 24 12.086 24zm3.2-1.809c-.578 0-1.048-.47-1.048-1.05s.47-1.048 1.048-1.048c.58 0 1.05.47 1.05 1.048s-.47 1.05-1.05 1.05z"/>
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[14px] text-on-surface leading-tight">Python</p>
+                      <p className="text-[11px] text-on-surface-variant/55 leading-snug mt-1">Core application language</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Frontend Row */}
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-5">
+                <div className="flex flex-col items-center justify-center gap-2 w-[88px] shrink-0">
+                  <div className="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.07)'}}>
+                    <Monitor className="w-6 h-6 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary text-center leading-tight">Frontend</span>
+                </div>
+
+                <div className="flex flex-1 gap-2.5 min-w-0">
+                  <div className="flex items-center gap-3 flex-1 min-w-0 rounded-xl border border-gray-200/80 bg-white px-3.5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-primary/30">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.12)'}}>
+                      {/* React official atom logo — monochrome SVG */}
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" className="w-7 h-7 text-primary" aria-hidden="true">
+                        <ellipse cx="12" cy="12" rx="10.5" ry="3.6"/>
+                        <ellipse cx="12" cy="12" rx="10.5" ry="3.6" transform="rotate(60 12 12)"/>
+                        <ellipse cx="12" cy="12" rx="10.5" ry="3.6" transform="rotate(120 12 12)"/>
+                        <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[14px] text-on-surface leading-tight">React</p>
+                      <p className="text-[11px] text-on-surface-variant/55 leading-snug mt-1">Interactive user interface</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-1 min-w-0 rounded-xl border border-gray-200/80 bg-white px-3.5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] cursor-default transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-primary/30">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.12)'}}>
+                      {/* Tailwind CSS official wave logo — monochrome SVG */}
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-primary" aria-hidden="true">
+                        <path d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.337 6.182 14.976 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.337 14.382 8.976 12 6.001 12z"/>
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-[14px] text-on-surface leading-tight">Tailwind CSS</p>
+                      <p className="text-[11px] text-on-surface-variant/55 leading-snug mt-1">Utility-first CSS framework</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </section>
@@ -90,10 +205,10 @@ export default function About() {
             </div>
             <div className="bg-surface-container-lowest p-10 rounded-2xl border border-outline-variant hover:shadow-lg transition-shadow h-full min-h-[280px] flex flex-col">
               <div className="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center mb-8 shrink-0">
-                <Eye className="text-on-primary-container w-8 h-8" />
+                <ScanSearch className="text-on-primary-container w-8 h-8" />
               </div>
-              <h3 className="font-headline-sm text-headline-sm font-bold mb-4">Thumbnail Preview</h3>
-              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Instant frame previews from the first frame of each video allow rapid assessment of retrieval relevance without full playback.</p>
+              <h3 className="font-headline-sm text-headline-sm font-bold mb-4">Text-to-Frame Search</h3>
+              <p className="font-body-sm text-on-surface-variant text-base leading-relaxed flex-grow">Search using natural language and retrieve the most relevant video frames with timestamp information for precise scene localization.</p>
             </div>
             <div className="bg-surface-container-lowest p-10 rounded-2xl border border-outline-variant hover:shadow-lg transition-shadow h-full min-h-[280px] flex flex-col">
               <div className="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center mb-8 shrink-0">
@@ -118,7 +233,7 @@ export default function About() {
               <div className="w-24 h-24 rounded-full bg-surface-container-lowest flex items-center justify-center border-[5px] border-primary mb-6 shadow-md">
                 <Search className="text-primary w-11 h-11" />
               </div>
-              <h4 className="font-label-md text-label-md font-bold mb-3 text-lg">User Query</h4>
+              <h4 className="font-label-md text-label-md font-bold mb-3 text-lg">Text / Image / Video Query</h4>
               <p className="font-body-sm text-on-surface-variant max-w-[220px] text-base leading-snug">Input text, image, or video seed.</p>
             </div>
             
