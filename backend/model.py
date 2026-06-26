@@ -13,10 +13,13 @@ Key decisions:
 
 from __future__ import annotations
 
+import logging
 import numpy as np
 import torch
 import clip
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
 def _select_device() -> str:
@@ -51,7 +54,7 @@ def init_model() -> None:
     global _model, _preprocess
     if _model is None:
         _model, _preprocess = _load_clip()
-        print(f"[model] CLIP ViT-B/32 loaded on {DEVICE}")
+        logger.info("CLIP ViT-B/32 loaded on %s", DEVICE)
 
 
 def get_model():

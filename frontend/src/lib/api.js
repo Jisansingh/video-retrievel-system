@@ -2,8 +2,6 @@ import axios from 'axios';
 
 export const API_URL = import.meta.env.VITE_API_URL;
 
-console.log('[API] VITE_API_URL =', API_URL);
-
 const client = axios.create({ baseURL: API_URL });
 
 client.interceptors.request.use(config => {

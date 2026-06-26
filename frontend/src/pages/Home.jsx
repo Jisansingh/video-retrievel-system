@@ -19,8 +19,21 @@ function saveToHistory(entry) {
   } catch {}
 }
 
+function getErrorMessage(err) {
+  if (err.response) {
+    const detail = err.response.data?.detail;
+    if (detail) return detail;
+    return `Server error (${err.response.status})`;
+  }
+  if (err.request) {
+    return 'Unable to reach the server. Check your connection and try again.';
+  }
+  return 'Something went wrong. Please try again.';
+}
+
 export default function Home() {
   const [results, setResults] = useState([]);
+  const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
   const [searchType, setSearchType] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,27 +46,24 @@ export default function Home() {
 
   const handleTextSearch = async (q, isFrame) => {
     setLoading(true);
+    setError(null);
     setQuery(q);
     setHasSearched(true);
     setSearchType(isFrame ? 'frames' : 'text');
 
     try {
       if (isFrame) {
-        console.log('[Search] frame search query:', q, 'top_k:', topK);
         const data = await frameSearch(q, topK);
-        console.log('[Search] frame response', data);
         setResults(data.results || []);
         saveToHistory({ type: 'frames', query: q });
       } else {
-        console.log('[Search] text search query:', q, 'top_k:', topK);
         const data = await textSearch(q, topK);
-        console.log('[Search] response', data);
         setResults(data.results || []);
         saveToHistory({ type: 'text', query: q });
       }
     } catch (err) {
-      console.error('[Search] FAILED:', err.message);
       setResults([]);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -61,18 +71,17 @@ export default function Home() {
 
   const handleImageSearch = async (file) => {
     setLoading(true);
+    setError(null);
     setSearchType('image');
     setQuery(file.name);
     setHasSearched(true);
     try {
-      console.log('[Search] image search file:', file.name, 'top_k:', topK);
       const data = await imageSearch(file, topK);
-      console.log('[Search] response', data);
       setResults(data.results || []);
       saveToHistory({ type: 'image', fileName: file.name });
     } catch (err) {
-      console.error('[Search] FAILED:', err.message);
       setResults([]);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -80,18 +89,17 @@ export default function Home() {
 
   const handleVideoSearch = async (file) => {
     setLoading(true);
+    setError(null);
     setSearchType('video');
     setQuery(file.name);
     setHasSearched(true);
     try {
-      console.log('[Search] video search file:', file.name, 'top_k:', topK);
       const data = await videoSearch(file, topK);
-      console.log('[Search] response', data);
       setResults(data.results || []);
       saveToHistory({ type: 'video', fileName: file.name });
     } catch (err) {
-      console.error('[Search] FAILED:', err.message);
       setResults([]);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -146,10 +154,17 @@ export default function Home() {
               </div>
             )}
 
-            {!loading && hasSearched && results.length === 0 && (
+            {!loading && hasSearched && results.length === 0 && !error && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <p className="font-body-lg text-body-lg text-on-surface-variant">No results found</p>
                 <p className="font-body-sm text-body-sm text-outline mt-2">Try a different query or adjust the top-k value.</p>
+              </div>
+            )}
+
+            {!loading && error && (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="font-body-lg text-body-lg text-red-500 font-semibold">Search failed</p>
+                <p className="font-body-sm text-body-sm text-outline mt-2">{error}</p>
               </div>
             )}
 

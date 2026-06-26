@@ -14,6 +14,7 @@ Key decisions:
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass
 
@@ -21,6 +22,8 @@ import faiss
 import numpy as np
 import clip
 import torch
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -87,7 +90,7 @@ def init_index(
             f"{len(_metadata)} entries. They must match."
         )
 
-    print(f"[search] FAISS index loaded: {_index.ntotal} vectors, dim={_index.d}")
+    logger.info("FAISS index loaded: %d vectors, dim=%d", _index.ntotal, _index.d)
 
 
 def get_index() -> faiss.Index:
@@ -164,7 +167,7 @@ def init_frame_index(
             f"{len(_frame_metadata)} entries."
         )
 
-    print(f"[search] Frame FAISS index loaded: {_frame_index.ntotal} vectors, dim={_frame_index.d}")
+    logger.info("Frame FAISS index loaded: %d vectors, dim=%d", _frame_index.ntotal, _frame_index.d)
 
 
 def get_frame_index() -> faiss.Index:

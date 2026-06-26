@@ -8,9 +8,18 @@ helpers that every pipeline script can use.
 from __future__ import annotations
 
 import json
+import logging
 import os
-from datetime import datetime
 
+logger = logging.getLogger(__name__)
+
+# Configure once so pipeline scripts see output without per-script setup
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
 # ---------------------------------------------------------------------------
 # Supported video formats — we only process these extensions.
@@ -95,25 +104,15 @@ def load_json(path: str) -> object:
 # Logging helper
 # ---------------------------------------------------------------------------
 def log(msg: str) -> None:
-    """Print a timestamped log line. Keeps debugging predictable across scripts."""
-    timestamp = datetime.now().strftime("%H:%M:%S")
-    print(f"[{timestamp}] {msg}")
+    """Log an info message. Keeps debugging predictable across scripts."""
+    logger.info(msg)
 
 
 def log_header(title: str) -> None:
-    """Print a clearly-visible section header — useful in long pipeline runs."""
-    print()
-    print("=" * 60)
-    print(f"  {title}")
-    print("=" * 60)
+    """Log a clearly-visible section header — useful in long pipeline runs."""
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("  %s", title)
+    logger.info("=" * 60)
 
 
-# ---------------------------------------------------------------------------
-# Path-existence helpers
-# ---------------------------------------------------------------------------
-def file_exists(path: str) -> bool:
-    return os.path.isfile(path)
-
-
-def dir_exists(path: str) -> bool:
-    return os.path.isdir(path)

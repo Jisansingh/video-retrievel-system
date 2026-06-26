@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI):
     init_index()
     init_frame_index()
     yield
-    # No explicit teardown needed; Python GC handles torch/faiss cleanup.
+    # Model and index memory is freed by Python GC on shutdown.
 
 
 app = FastAPI(
@@ -101,18 +101,19 @@ def generate_video_embedding(video_path: str) -> np.ndarray:
     frame_embeddings: list[np.ndarray] = []
     frame_idx = 0
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        if frame_idx % FRAME_INTERVAL == 0:
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            pil_image = Image.fromarray(rgb)
-            emb = generate_embedding(pil_image)
-            frame_embeddings.append(emb)
-        frame_idx += 1
-
-    cap.release()
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            if frame_idx % FRAME_INTERVAL == 0:
+                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                pil_image = Image.fromarray(rgb)
+                emb = generate_embedding(pil_image)
+                frame_embeddings.append(emb)
+            frame_idx += 1
+    finally:
+        cap.release()
 
     if not frame_embeddings:
         raise ValueError("No frames could be extracted from the video")
@@ -190,6 +191,8 @@ async def text_search_endpoint(
         results = text_search(query.strip(), top_k=top_k)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search failed: {e}")
 
@@ -209,6 +212,8 @@ async def frame_search_endpoint(
         raw_results = frame_text_search(query.strip(), top_k=top_k)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Frame search failed: {e}")
 
@@ -236,6 +241,12 @@ async def search(
         pil_image = Image.open(temp_path).convert("RGB")
         embedding = generate_embedding(pil_image)
         results = search_similar(embedding, top_k=top_k)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Image search failed: {e}")
     finally:
         cleanup_temp_file(temp_path)
 
@@ -266,6 +277,12 @@ async def search_video(
     try:
         embedding = generate_video_embedding(temp_path)
         results = search_similar(embedding, top_k=top_k)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Video search failed: {e}")
     finally:
         cleanup_temp_file(temp_path)
 
@@ -316,11 +333,16 @@ async def download_frame(path: str):
     Forces browser download via Content-Disposition: attachment.
     Validates the path to prevent directory traversal.
     """
-    frame_path = os.path.normpath(os.path.join(FRAMES_DIR, path))
-    if not frame_path.startswith(FRAMES_DIR):
-        raise HTTPException(status_code=400, detail="Invalid path")
-    if not os.path.isfile(frame_path):
-        raise HTTPException(status_code=404, detail="Frame not found")
+    try:
+        frame_path = os.path.normpath(os.path.join(FRAMES_DIR, path))
+        if not frame_path.startswith(FRAMES_DIR):
+            raise HTTPException(status_code=400, detail="Invalid path")
+        if not os.path.isfile(frame_path):
+            raise HTTPException(status_code=404, detail="Frame not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid download path: {e}")
 
     return FileResponse(
         frame_path,

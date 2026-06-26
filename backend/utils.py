@@ -9,10 +9,13 @@ Responsibilities:
 
 from __future__ import annotations
 
+import logging
 import os
 import tempfile
 
 from fastapi import UploadFile, HTTPException
+
+logger = logging.getLogger(__name__)
 
 # Whitelist of MIME types we accept. Pillow can read more formats, but we
 # constrain to common image types to avoid security / compatibility surprises.
@@ -112,7 +115,7 @@ def cleanup_temp_file(path: str) -> None:
         if os.path.exists(path):
             os.remove(path)
     except OSError:
-        pass  # File system hiccup; not actionable at this level.
+        logger.warning("Failed to clean up temp file: %s", path)
 
 
 def _extension_from_content_type(content_type: str | None) -> str:

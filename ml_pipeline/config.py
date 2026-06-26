@@ -60,22 +60,3 @@ elif torch.backends.mps.is_available():
     DEVICE = "mps"
 else:
     DEVICE = "cpu"
-
-
-def print_config() -> None:
-    """Print every config value — useful for debugging on a new machine."""
-    print("=" * 50)
-    print("ML Pipeline Configuration")
-    print("=" * 50)
-    print(f"  ROOT:               {ROOT}")
-    print(f"  VIDEOS_DIR:         {VIDEOS_DIR}")
-    print(f"  FRAMES_DIR:         {FRAMES_DIR}")
-    print(f"  EMBEDDINGS_DIR:     {EMBEDDINGS_DIR}")
-    print(f"  INDEXES_DIR:        {INDEXES_DIR}")
-    print(f"  CLIP_MODEL_NAME:    {CLIP_MODEL_NAME}")
-    print(f"  CLIP_EMBEDDING_DIM: {CLIP_EMBEDDING_DIM}")
-    print(f"  FRAME_INTERVAL:     {FRAME_INTERVAL}")
-    print(f"  BATCH_SIZE:         {BATCH_SIZE}")
-    print(f"  DEFAULT_TOP_K:      {DEFAULT_TOP_K}")
-    print(f"  DEVICE:             {DEVICE}")
-    print("=" * 50)
