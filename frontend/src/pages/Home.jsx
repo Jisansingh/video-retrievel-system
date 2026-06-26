@@ -8,6 +8,7 @@ import VideoModal from '../components/VideoModal';
 import { Link } from 'react-router-dom';
 import { textSearch, imageSearch, videoSearch, frameSearch, assetUrl } from '../lib/api';
 import FrameCard from '../components/FrameCard';
+import { useBookmarks } from '../lib/useBookmarks';
 
 function saveToHistory(entry) {
   try {
@@ -43,6 +44,7 @@ export default function Home() {
   const [searchParams] = useSearchParams();
   const [topK, setTopK] = useState(5);
   const [hasSearched, setHasSearched] = useState(false);
+  const { toggle: toggleBookmark, isBookmarked } = useBookmarks();
 
   const handleTextSearch = async (q, isFrame) => {
     setLoading(true);
@@ -205,6 +207,8 @@ export default function Home() {
                           imageSrc={assetUrl(item.thumbnail_url)}
                           score={item.score}
                           category={item.category}
+                          isBookmarked={isBookmarked(item.title)}
+                          onToggleBookmark={toggleBookmark}
                           onClick={() => { setSelectedVideo(item); setSelectedIndex(idx); }}
                         />
                       )

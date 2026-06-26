@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Database } from 'lucide-react';
+import { Database, Bookmark } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import CategoryCard from '../components/CategoryCard';
 import LibraryVideoCard from '../components/LibraryVideoCard';
 import VideoModal from '../components/VideoModal';
 import { Link } from 'react-router-dom';
 import { getLibrary, assetUrl } from '../lib/api';
+import { useBookmarks } from '../lib/useBookmarks';
 
 const PAGE_SIZE = 12;
 
@@ -16,6 +17,8 @@ export default function Library() {
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [bookmarkFilter, setBookmarkFilter] = useState(false);
+  const { bookmarks, toggle: toggleBookmark, isBookmarked } = useBookmarks();
 
   useEffect(() => {
     console.log('[Library] fetching /library...');
@@ -35,7 +38,7 @@ export default function Library() {
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [activeCategory]);
+  }, [activeCategory, bookmarkFilter]);
 
   const categories = libraryData
     ? Object.entries(libraryData).map(([key, videos]) => ({
@@ -46,7 +49,10 @@ export default function Library() {
       }))
     : [];
 
-  const allVideos = libraryData?.[activeCategory] || [];
+  const allVideos = bookmarkFilter
+    ? Object.values(libraryData || {}).flat().filter(v => bookmarks.has(v.title))
+    : (libraryData?.[activeCategory] || []);
+
   const visibleVideos = allVideos.slice(0, visibleCount);
   const hasMore = visibleCount < allVideos.length;
 
@@ -82,7 +88,10 @@ export default function Library() {
                   count={category.count}
                   imageSrc={category.imageSrc}
                   isActive={activeCategory === category.id}
-                  onClick={() => setActiveCategory(category.id)}
+                  onClick={() => {
+                    setActiveCategory(category.id);
+                    setBookmarkFilter(false);
+                  }}
                 />
               ))}
             </div>
@@ -92,35 +101,62 @@ export default function Library() {
         {/* Video Grid Section */}
         {!loading && (
           <section className="mt-8 w-full">
-            <div className="mb-8 border-b border-outline-variant pb-6">
+            <div className="mb-8 border-b border-outline-variant pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <h3 className="font-headline-md text-headline-md text-on-surface font-bold">
-                {activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Collection
+                {bookmarkFilter ? 'Bookmarked Videos' : `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Collection`}
               </h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {visibleVideos.map((video, idx) => (
-                <LibraryVideoCard 
-                  key={video.title + idx}
-                  title={video.title}
-                  imageSrc={assetUrl(video.thumbnail_url)}
-                  onClick={() => {
-                    setSelectedVideo(video);
-                    setSelectedIndex(idx);
-                  }}
+              <button
+                onClick={() => setBookmarkFilter(prev => !prev)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-label-sm font-semibold transition-all duration-150 cursor-pointer ${
+                  bookmarkFilter
+                    ? 'bg-teal-50 border-teal-600 text-white'
+                    : 'bg-white border-teal-600 text-teal-600 hover:bg-teal-50'
+                }`}
+              >
+                <Bookmark
+                  className="w-4 h-4"
+                  strokeWidth={2}
+                  fill={bookmarkFilter ? '#0d9488' : 'none'}
                 />
-              ))}
+                Bookmarks Only
+              </button>
             </div>
 
-            {hasMore && (
-              <div className="mt-12 flex items-center justify-center">
-                <button
-                  className="bg-surface-container-low border border-outline-variant text-primary font-label-md text-base px-8 py-3 rounded-lg hover:bg-surface-variant transition-all font-semibold shadow-sm hover:shadow active:scale-95 cursor-pointer"
-                  onClick={handleLoadMore}
-                >
-                  Load More
-                </button>
+            {bookmarkFilter && allVideos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Bookmark className="w-16 h-16 text-outline mb-4" strokeWidth={1.5} />
+                <p className="font-body-lg text-body-lg text-on-surface-variant font-semibold">No bookmarked videos yet</p>
+                <p className="font-body-sm text-body-sm text-outline mt-2">Bookmark videos to quickly access them here.</p>
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {visibleVideos.map((video, idx) => (
+                    <LibraryVideoCard 
+                      key={video.title + idx}
+                      title={video.title}
+                      imageSrc={assetUrl(video.thumbnail_url)}
+                      isBookmarked={isBookmarked(video.title)}
+                      onToggleBookmark={toggleBookmark}
+                      onClick={() => {
+                        setSelectedVideo(video);
+                        setSelectedIndex(idx);
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {hasMore && (
+                  <div className="mt-12 flex items-center justify-center">
+                    <button
+                      className="bg-surface-container-low border border-outline-variant text-primary font-label-md text-base px-8 py-3 rounded-lg hover:bg-surface-variant transition-all font-semibold shadow-sm hover:shadow active:scale-95 cursor-pointer"
+                      onClick={handleLoadMore}
+                    >
+                      Load More
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </section>
         )}

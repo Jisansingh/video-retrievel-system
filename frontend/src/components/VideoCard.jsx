@@ -1,4 +1,5 @@
 import { PlayCircle, Check } from 'lucide-react';
+import BookmarkButton from './BookmarkButton';
 
 function getScoreConfig(scorePct) {
   if (scorePct == null) return null;
@@ -94,7 +95,7 @@ function getExplanations(category, title) {
   return pickN(pool, seed, 3);
 }
 
-export default function VideoCard({ title, imageSrc, score, category, onClick }) {
+export default function VideoCard({ title, imageSrc, score, category, onClick, isBookmarked, onToggleBookmark }) {
   const scorePct = score != null ? Math.round(score * 100) : null;
   const scoreConfig = getScoreConfig(scorePct);
   const explanations = getExplanations(category, title);
@@ -112,6 +113,15 @@ export default function VideoCard({ title, imageSrc, score, category, onClick })
         {scorePct != null && scorePct >= 90 && (
           <div className="absolute top-3 left-3 bg-primary text-on-primary px-2 py-1 rounded text-label-sm font-bold shadow-md z-10">
             Best Match
+          </div>
+        )}
+
+        {onToggleBookmark && (
+          <div className="absolute top-3 right-3 z-20">
+            <BookmarkButton
+              isBookmarked={!!isBookmarked}
+              onToggle={() => onToggleBookmark(title)}
+            />
           </div>
         )}
         
