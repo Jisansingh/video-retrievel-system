@@ -14,9 +14,14 @@ A FastAPI-based service for multimodal video retrieval using OpenAI CLIP (ViT-B/
 |---|---|---|
 | `GET` | `/health` | Liveness probe |
 | `GET` | `/` | Root — server status |
+| `GET` | `/library` | List all videos grouped by category |
 | `GET` | `/search` | Text-to-video retrieval |
+| `GET` | `/search/frames` | Text-to-frame retrieval |
 | `POST` | `/search` | Image-to-video retrieval |
 | `POST` | `/search/video` | Video-to-video retrieval |
+| `GET` | `/download/frame` | Download a matched frame as JPEG |
+| `GET` | `/videos/*` | Static video file serving |
+| `GET` | `/frames/*` | Static thumbnail serving |
 
 ---
 
@@ -68,7 +73,42 @@ curl http://localhost:8000/
 
 ---
 
-## 3. Text-to-Video Search
+## 3. Library
+
+```
+GET /library
+```
+
+List all videos grouped by category. Built dynamically from the filesystem — no database.
+
+**Example request:**
+
+```bash
+curl http://localhost:8000/library
+```
+
+**Response `200 OK`:**
+
+```json
+{
+  "animals": [
+    {
+      "title": "animals_14.mp4",
+      "category": "animals",
+      "video_url": "/videos/animals/animals_14.mp4",
+      "thumbnail_url": "/frames/animals/animals_14/frame_00000.jpg"
+    }
+  ],
+  "humans": [],
+  "indoors": [],
+  "nature": [],
+  "vehicles": []
+}
+```
+
+---
+
+## 4. Text-to-Video Search
 
 ```
 GET /search
@@ -97,21 +137,12 @@ curl "http://localhost:8000/search?query=a+dog+running+on+grass&top_k=3"
   "results": [
     {
       "rank": 1,
-      "video": "animals/dog_running",
+      "video": "animals/animals_14",
       "category": "animals",
-      "score": 0.8123
-    },
-    {
-      "rank": 2,
-      "video": "animals/puppy_play",
-      "category": "animals",
-      "score": 0.7641
-    },
-    {
-      "rank": 3,
-      "video": "nature/park_scene",
-      "category": "nature",
-      "score": 0.6987
+      "score": 0.2761,
+      "title": "animals_14.mp4",
+      "video_url": "/videos/animals/animals_14.mp4",
+      "thumbnail_url": "/frames/animals/animals_14/frame_00000.jpg"
     }
   ]
 }
@@ -123,11 +154,11 @@ curl "http://localhost:8000/search?query=a+dog+running+on+grass&top_k=3"
 |---|---|
 | `400` | Empty query string |
 | `422` | Missing `query` parameter or `top_k` out of range |
-| `500` | Search failure (e.g. index not loaded) |
+| `500` | Search failure (e.g. index not loaded, model not initialised) |
 
 ---
 
-## 4. Image-to-Video Search
+## 5. Image-to-Video Search
 
 ```
 POST /search
@@ -166,16 +197,12 @@ curl -X POST "http://localhost:8000/search?top_k=3" \
   "query": "query_image.jpg",
   "results": [
     {
-      "video": "vehicles/car_on_road",
-      "score": 0.8912
-    },
-    {
-      "video": "vehicles/truck_hwy",
-      "score": 0.7543
-    },
-    {
-      "video": "animals/deer_field",
-      "score": 0.6211
+      "video": "animals/animals_14",
+      "score": 0.8912,
+      "title": "animals_14.mp4",
+      "category": "animals",
+      "video_url": "/videos/animals/animals_14.mp4",
+      "thumbnail_url": "/frames/animals/animals_14/frame_00000.jpg"
     }
   ]
 }
@@ -191,7 +218,7 @@ curl -X POST "http://localhost:8000/search?top_k=3" \
 
 ---
 
-## 5. Video-to-Video Search
+## 6. Video-to-Video Search
 
 ```
 POST /search/video
@@ -244,24 +271,12 @@ curl -X POST "http://localhost:8000/search/video?top_k=5" \
   "query": "query_video.mp4",
   "results": [
     {
-      "video": "animals/lion",
-      "score": 0.8231
-    },
-    {
-      "video": "animals/tiger",
-      "score": 0.7642
-    },
-    {
-      "video": "nature/savanna",
-      "score": 0.7123
-    },
-    {
-      "video": "animals/elephant",
-      "score": 0.6871
-    },
-    {
-      "video": "nature/jungle",
-      "score": 0.6547
+      "video": "animals/animals_14",
+      "score": 0.8231,
+      "title": "animals_14.mp4",
+      "category": "animals",
+      "video_url": "/videos/animals/animals_14.mp4",
+      "thumbnail_url": "/frames/animals/animals_14/frame_00000.jpg"
     }
   ]
 }
@@ -277,39 +292,159 @@ curl -X POST "http://localhost:8000/search/video?top_k=5" \
 
 ---
 
+## 7. Text-to-Frame Search
+
+```
+GET /search/frames
+```
+
+Encode a natural-language description with CLIP and retrieve the most semantically similar individual frames from the frame-level FAISS index. Results include an approximate timestamp derived from the frame number and sampling interval.
+
+### Query Parameters
+
+| Parameter | Type | Required | Default | Constraints |
+|---|---|---|---|---|
+| `query` | `string` | Yes | — | Minimum 1 character |
+| `top_k` | `integer` | No | `12` | 1–50 |
+
+### Example Request
+
+```bash
+curl "http://localhost:8000/search/frames?query=a+dog+running&top_k=3"
+```
+
+### Response `200 OK`
+
+```json
+{
+  "query": "a dog running",
+  "results": [
+    {
+      "frame_url": "/frames/animals/animals_14/frame_00005.jpg",
+      "video": "animals/animals_14",
+      "video_url": "/videos/animals/animals_14.mp4",
+      "timestamp": 5.0,
+      "category": "animals",
+      "score": 0.3124
+    }
+  ]
+}
+```
+
+### Error Responses
+
+| Status | Condition |
+|---|---|
+| `400` | Empty query string |
+| `422` | Missing `query` parameter or `top_k` out of range |
+| `500` | Search failure (e.g. frame index not loaded) |
+
+---
+
+## 8. Frame Download
+
+```
+GET /download/frame
+```
+
+Download a matched frame as a JPEG file. The endpoint validates the path to prevent directory traversal.
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `path` | `string` | Yes | Relative frame path (e.g. `animals/animals_14/frame_00005.jpg`) |
+
+### Example Request
+
+```bash
+curl -o frame.jpg "http://localhost:8000/download/frame?path=animals/animals_14/frame_00005.jpg"
+```
+
+### Response `200 OK`
+
+Returns the JPEG file with `Content-Disposition: attachment`.
+
+### Error Responses
+
+| Status | Condition |
+|---|---|
+| `400` | Invalid or traversed path |
+| `404` | Frame file not found |
+
+---
+
 ## Response Format
 
-All search endpoints return a JSON object with the same top-level structure:
+All video search endpoints (`GET /search`, `POST /search`, `POST /search/video`) return a JSON object with this structure:
 
 ```json
 {
   "query": "<query string or filename>",
   "results": [
     {
-      "video": "<video identifier from index>",
-      "score": 0.8912
+      "video": "animals/animals_14",
+      "score": 0.2761,
+      "title": "animals_14.mp4",
+      "category": "animals",
+      "video_url": "/videos/animals/animals_14.mp4",
+      "thumbnail_url": "/frames/animals/animals_14/frame_00000.jpg"
     }
   ]
 }
 ```
 
-### Fields
+The frame search endpoint (`GET /search/frames`) returns a different result schema:
+
+```json
+{
+  "query": "a dog running",
+  "results": [
+    {
+      "frame_url": "/frames/animals/animals_14/frame_00005.jpg",
+      "video": "animals/animals_14",
+      "video_url": "/videos/animals/animals_14.mp4",
+      "timestamp": 5.0,
+      "category": "animals",
+      "score": 0.3124
+    }
+  ]
+}
+```
+
+### Video Search Fields
 
 | Field | Type | Description |
 |---|---|---|
 | `query` | `string` | Original query text or uploaded filename |
 | `results` | `array` | Ranked list of matching videos (highest score first) |
-| `results[].video` | `string` | Video path relative to the dataset (e.g. `"animals/lion"`) |
+| `results[].video` | `string` | Video path relative to the dataset (e.g. `"animals/animals_14"`) |
 | `results[].score` | `float` | Cosine similarity in [0, 1]. Higher = more similar |
+| `results[].title` | `string` | Display filename (e.g. `"animals_14.mp4"`) |
+| `results[].category` | `string` | Top-level category (e.g. `"animals"`) |
+| `results[].video_url` | `string` | URL to stream the video (e.g. `"/videos/animals/animals_14.mp4"`) |
+| `results[].thumbnail_url` | `string` | URL to the first frame thumbnail (e.g. `"/frames/animals/animals_14/frame_00000.jpg"`) |
 
 ### Text Search Additional Fields
 
-The text search response includes two extra fields per result:
+The text-to-video search (`GET /search`) includes one additional field per result:
 
 | Field | Type | Description |
 |---|---|---|
 | `rank` | `integer` | 1-based rank position |
-| `category` | `string` | Top-level category inferred from the video path |
+
+### Frame Search Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `query` | `string` | Original query text |
+| `results` | `array` | Ranked list of matching frames |
+| `results[].frame_url` | `string` | URL to the matched frame thumbnail |
+| `results[].video` | `string` | Parent video path (e.g. `"animals/animals_14"`) |
+| `results[].video_url` | `string` | URL to stream the parent video |
+| `results[].timestamp` | `float` | Approximate timestamp in seconds |
+| `results[].category` | `string` | Top-level category |
+| `results[].score` | `float` | Cosine similarity in [0, 1] |
 
 ---
 
@@ -336,20 +471,23 @@ All errors follow a consistent JSON structure:
 
 ## Startup Requirements
 
-Before the server accepts requests it loads two resources:
+Before the server accepts requests it loads these resources at startup:
 
 | Resource | Loaded From |
 |---|---|
 | CLIP ViT-B/32 model | Automatically downloaded by the `clip` library on first use |
-| FAISS index | `ml_pipeline/data/indexes/video_index.faiss` |
+| Video FAISS index | `ml_pipeline/data/indexes/video_index.faiss` |
 | Video metadata | `ml_pipeline/data/indexes/video_metadata.json` |
+| Frame FAISS index | `ml_pipeline/data/indexes/frame_faiss.index` |
+| Frame metadata | `ml_pipeline/data/indexes/frame_metadata.json` |
 
-The server will fail to start if the FAISS index or metadata files are missing. These are produced by running the ML pipeline:
+The server will fail to start if any FAISS index or metadata file is missing. These are produced by running the ML pipeline:
 
 ```
 python ml_pipeline/extract_frames.py
 python ml_pipeline/generate_embeddings.py
 python ml_pipeline/build_faiss.py
+python ml_pipeline/generate_frame_embeddings.py
 ```
 
 ---

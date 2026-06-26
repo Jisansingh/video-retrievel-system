@@ -34,7 +34,7 @@ Users should be able to search using visual content or natural language descript
 
 ### Secondary Goals
 
-* Display timestamps for matching scenes
+* Display timestamps for matching scenes — implemented via frame-level search
 * Support large-scale video indexing
 * Provide a modern web interface
 
@@ -56,17 +56,13 @@ Users should be able to search using visual content or natural language descript
 
 Users can upload a video clip and retrieve similar videos.
 
-Input:
-
-* MP4
-* AVI
-* MOV
+Input: MP4, AVI, MOV, MKV, WebM (up to 200 MB)
 
 Output:
 
 * Ranked video matches
 * Similarity score
-* Video metadata
+* Video metadata (title, category, video URL, thumbnail URL)
 
 ---
 
@@ -82,6 +78,16 @@ The system should:
 
 ---
 
+### Frame Search
+
+Users can enter a natural language description and retrieve individual frames with timestamps.
+
+The system should:
+
+* Generate CLIP text embeddings
+* Search the per-frame FAISS index
+* Return matched frames with video source and timestamp
+
 ### Text Search
 
 Users can enter a natural language description.
@@ -95,7 +101,7 @@ The system should:
 
 * Generate CLIP text embeddings
 * Search indexed video embeddings
-* Return relevant results
+* Return relevant results with title, category, and thumbnail
 
 ---
 
@@ -120,13 +126,14 @@ The system should:
 
 ## Current Architecture
 
-Dataset
-→ Frame Extraction
-→ CLIP Embeddings
-→ Mean Pooling
-→ FAISS Index
-→ FastAPI Backend
-→ Frontend UI
+```
+Dataset (data/videos/)
+  → Frame Extraction (every 30th frame)
+  → CLIP Video Embeddings (mean-pooled per video) + FAISS Index
+  → CLIP Frame Embeddings (per-frame) + FAISS Index
+  → FastAPI Backend (REST API + static file serving)
+  → React + Vite Frontend (Tailwind CSS v4)
+```
 
 ---
 
@@ -146,11 +153,16 @@ Dataset
 ### Backend
 
 * FastAPI
+* Uvicorn
 
-### Frontend (Planned)
+### Frontend
 
-* React
-* TailwindCSS
+* React 19
+* Tailwind CSS v4
+* Vite 8
+* React Router v7
+* Axios
+* Lucide React (icons)
 
 ---
 
@@ -165,16 +177,17 @@ Dataset
 
 ## Future Enhancements
 
-### Phase 2
+### Short Term
 
-* Scene-level retrieval
-* Better timestamp precision
-* Thumbnail generation
-* Metadata database
+* Server-side pagination for library
+* Advanced filtering (by category, duration, date)
+* Retrieval analytics and result diversity
 
-### Phase 3
+### Long Term
 
+* Quantised FAISS index (IVF / HNSW) for sub-50ms search at scale
 * Audio-based retrieval
 * Hybrid text + visual search
 * Distributed indexing
-* User accounts and saved searches
+* User authentication and saved searches
+* Docker deployment with CI/CD
