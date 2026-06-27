@@ -176,9 +176,9 @@ export default function Library() {
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
             <div className="flex items-center gap-2">
               <Database className="text-primary w-6 h-6" />
-              <span className="font-headline-sm text-headline-sm font-bold text-primary">Video Retrieval System</span>
+              <span className="font-headline-sm text-headline-sm font-bold text-primary">VidShazam</span>
             </div>
-            <p className="font-body-sm text-body-sm text-secondary dark:text-secondary-fixed-dim hidden md:block">© 2024 Video Retrieval System.</p>
+            <p className="font-body-sm text-body-sm text-secondary dark:text-secondary-fixed-dim hidden md:block">© 2024 VidShazam.</p>
           </div>
           <div className="flex items-center gap-8">
             <Link className="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors font-medium" to="#">Terms</Link>

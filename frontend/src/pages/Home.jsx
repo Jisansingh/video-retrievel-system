@@ -121,7 +121,7 @@ export default function Home() {
       <main className="pt-24 pb-12 flex-grow w-full flex flex-col">
         {/* Hero Section */}
         <section className="w-full max-w-5xl mx-auto px-6 mb-12 text-center">
-          <h1 className="font-display-lg text-display-lg text-on-surface mb-4">Multimodal Video Retrieval</h1>
+          <h1 className="font-display-lg text-display-lg text-on-surface mb-4">VidShazam</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-8">
             Harnessing state-of-the-art vision-language models to find specific moments across massive video archives with surgical precision.
           </p>
@@ -287,8 +287,8 @@ export default function Home() {
       <footer className="w-full py-8 px-6 bg-surface-container-low dark:bg-surface-dim border-t border-outline-variant dark:border-outline mt-auto">
         <div className="max-w-screen-2xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-            <span className="font-headline-sm text-headline-sm font-bold text-primary">Video Retrieval System</span>
-            <p className="font-body-sm text-body-sm text-secondary dark:text-secondary-fixed-dim">© 2024 Video Retrieval System.</p>
+            <span className="font-headline-sm text-headline-sm font-bold text-primary">VidShazam</span>
+            <p className="font-body-sm text-body-sm text-secondary dark:text-secondary-fixed-dim">© 2024 VidShazam.</p>
           </div>
           <div className="flex items-center gap-8">
             <Link className="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors font-medium" to="#">Terms</Link>

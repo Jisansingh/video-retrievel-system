@@ -11,7 +11,7 @@ export default function About() {
         
         {/* Hero Section */}
         <section className="text-center max-w-5xl mx-auto w-full">
-          <h1 className="font-display-lg text-display-lg text-on-surface mb-6 font-bold">Multimodal Video Retrieval System</h1>
+          <h1 className="font-display-lg text-display-lg text-on-surface mb-6 font-bold">VidShazam</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
             A multimodal video retrieval system supporting text, image, video, and frame-level search using CLIP embeddings and FAISS similarity indexing.
           </p>
@@ -332,8 +332,8 @@ export default function About() {
       <footer className="w-full py-8 px-6 bg-surface-container-low dark:bg-surface-dim border-t border-outline-variant dark:border-outline mt-auto">
         <div className="max-w-screen-2xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-            <span className="font-headline-sm text-headline-sm font-bold text-primary">Video Retrieval System</span>
-            <p className="font-body-sm text-body-sm text-secondary dark:text-secondary-fixed-dim hidden md:block">© 2026 Video Retrieval System.</p>
+            <span className="font-headline-sm text-headline-sm font-bold text-primary">VidShazam</span>
+            <p className="font-body-sm text-body-sm text-secondary dark:text-secondary-fixed-dim hidden md:block">© 2026 VidShazam.</p>
           </div>
           <div className="flex items-center gap-8">
             <Link className="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors font-medium" to="#">Terms</Link>

@@ -15,7 +15,7 @@ export default function Navbar() {
       <div className="flex justify-between items-center px-6 h-20 max-w-screen-2xl mx-auto w-full">
         <div className="flex items-center gap-4">
           <span className="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed-dim tracking-tight">
-            Video Retrieval System
+            Vid⚡hazam
           </span>
         </div>
         <div className="hidden md:flex items-center gap-8">
