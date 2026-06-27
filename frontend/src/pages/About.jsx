@@ -57,7 +57,7 @@ export default function About() {
             <div className="flex flex-col gap-2.5 px-5 pb-5">
 
               {/* AI & Retrieval Row */}
-              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-5">
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-[#f3f9f7] px-4 py-5">
                 {/* Category label — open, no harsh border */}
                 <div className="flex flex-col items-center justify-center gap-2 w-[88px] shrink-0">
                   <div className="w-12 h-12 rounded-full border border-primary/20 bg-primary/8 flex items-center justify-center" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.07)'}}>
@@ -90,7 +90,7 @@ export default function About() {
               </div>
 
               {/* Backend Row */}
-              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-5">
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-[#f3f9f7] px-4 py-5">
                 <div className="flex flex-col items-center justify-center gap-2 w-[88px] shrink-0">
                   <div className="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.07)'}}>
                     <Server className="w-6 h-6 text-primary" strokeWidth={1.5} />
@@ -125,7 +125,7 @@ export default function About() {
               </div>
 
               {/* Frontend Row */}
-              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-5">
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-[#f3f9f7] px-4 py-5">
                 <div className="flex flex-col items-center justify-center gap-2 w-[88px] shrink-0">
                   <div className="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center" style={{background: 'rgba(var(--color-primary-rgb, 13 148 136), 0.07)'}}>
                     <Monitor className="w-6 h-6 text-primary" strokeWidth={1.5} />
