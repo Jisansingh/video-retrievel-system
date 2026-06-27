@@ -17,6 +17,7 @@ Endpoints:
 
 from __future__ import annotations
 
+import logging
 import os
 
 # macOS OpenMP workaround: PyTorch and faiss-cpu each ship their own
@@ -41,6 +42,8 @@ from backend.model import init_model, generate_embedding
 from backend.search import init_index, search_similar, text_search, init_frame_index, frame_text_search
 from backend.utils import validate_image, validate_video, save_temp_image, cleanup_temp_file
 from ml_pipeline.config import VIDEOS_DIR, FRAMES_DIR
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -127,9 +130,10 @@ def generate_video_embedding(video_path: str) -> np.ndarray:
 
 def _video_ext(category: str, stem: str) -> str:
     """Return the actual file extension for a video by checking the filesystem."""
-    for ext in _VIDEO_EXTS:
-        if os.path.isfile(os.path.join(VIDEOS_DIR, category, stem + ext)):
-            return ext
+    if os.path.isdir(VIDEOS_DIR):
+        for ext in _VIDEO_EXTS:
+            if os.path.isfile(os.path.join(VIDEOS_DIR, category, stem + ext)):
+                return ext
     return ".mp4"
 
 
@@ -162,8 +166,15 @@ def _enrich_video(video_path: str) -> dict:
 # ---------------------------------------------------------------------------
 # Static file mounts — serve videos and thumbnails directly from disk.
 # ---------------------------------------------------------------------------
-app.mount("/videos", StaticFiles(directory=VIDEOS_DIR), name="videos")
-app.mount("/frames", StaticFiles(directory=FRAMES_DIR), name="frames")
+if os.path.isdir(VIDEOS_DIR):
+    app.mount("/videos", StaticFiles(directory=VIDEOS_DIR), name="videos")
+else:
+    logger.warning("VIDEOS_DIR (%s) not found — skipping /videos mount", VIDEOS_DIR)
+
+if os.path.isdir(FRAMES_DIR):
+    app.mount("/frames", StaticFiles(directory=FRAMES_DIR), name="frames")
+else:
+    logger.warning("FRAMES_DIR (%s) not found — skipping /frames mount", FRAMES_DIR)
 
 
 # ---------------------------------------------------------------------------
@@ -301,6 +312,9 @@ async def library():
 
     Built dynamically from the filesystem — no database, no hardcoded values.
     """
+    if not os.path.isdir(VIDEOS_DIR):
+        return {}
+
     categories: dict[str, list[dict]] = {}
 
     for cat_name in sorted(os.listdir(VIDEOS_DIR)):
